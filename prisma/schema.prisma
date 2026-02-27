@@ -1,0 +1,130 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ──────────────────────────────────────────────
+// Better Auth tables
+// ──────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?   @db.Text
+  role          String    @default("user") // "user" | "admin"
+  banned        Boolean   @default(false)
+  banReason     String?   @db.Text
+  banExpires    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sessions Session[]
+  accounts Account[]
+
+  submittedQuotes Quote[] @relation("SubmittedQuotes")
+  curatedQuotes   Quote[] @relation("CuratedQuotes")
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?  @db.Text
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?   @db.Text
+  refreshToken          String?   @db.Text
+  idToken               String?   @db.Text
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?   @db.Text
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String   @db.Text
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+// ──────────────────────────────────────────────
+// Application tables
+// ──────────────────────────────────────────────
+
+model Quote {
+  id String @id @default(cuid())
+
+  // Content
+  text         String  @db.Text
+  attribution  String  // name or alias
+  socialHandle String? // e.g. @username (X / Instagram)
+  authorPhoto  String? @db.Text // optional profile photo URL
+
+  // Design choices (submitter-selected)
+  fontPrimary   String? // primary font family
+  fontSecondary String? // secondary / pairing font
+  colorPalette  String? @db.Text // JSON string of color palette
+  mood          String? // e.g. "melancholy", "bold", "serene"
+
+  // Curation
+  status    QuoteStatus @default(PENDING)
+  curatorId String?
+  curator   User?       @relation("CuratedQuotes", fields: [curatorId], references: [id], onDelete: SetNull)
+
+  // Final design (set during curation)
+  cardImageUrl String? @db.Text // generated story card URL
+  designNotes  String? @db.Text // internal curator notes
+
+  // Submitter
+  submitterId String?
+  submitter   User?   @relation("SubmittedQuotes", fields: [submitterId], references: [id], onDelete: SetNull)
+
+  publishedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([submitterId])
+  @@index([publishedAt])
+  @@map("quote")
+}
+
+enum QuoteStatus {
+  PENDING
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+}

@@ -1,0 +1,371 @@
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { signOut } from "@/lib/auth-client";
+
+const STATUS_COLORS: Record<string, string> = {
+  PENDING: "#facc15",
+  IN_REVIEW: "#60a5fa",
+  APPROVED: "#34d399",
+  PUBLISHED: "#a78bfa",
+  REJECTED: "#f87171",
+};
+
+const STATUS_OPTIONS = [
+  "PENDING",
+  "IN_REVIEW",
+  "APPROVED",
+  "PUBLISHED",
+  "REJECTED",
+] as const;
+
+interface AdminQuote {
+  id: string;
+  text: string;
+  attribution: string;
+  socialHandle: string | null;
+  authorPhoto: string | null;
+  fontPrimary: string | null;
+  fontSecondary: string | null;
+  colorPalette: string | null;
+  mood: string | null;
+  status: string;
+  designNotes: string | null;
+  cardImageUrl: string | null;
+  curatorId: string | null;
+  submitterId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt: string | null;
+  submitter: {
+    id: string;
+    name: string;
+    email: string;
+    image: string | null;
+  } | null;
+  curator: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+interface AdminStats {
+  total: number;
+  pending: number;
+  inReview: number;
+  published: number;
+  rejected: number;
+}
+
+interface AdminClientProps {
+  quotes: AdminQuote[];
+  stats: AdminStats;
+}
+
+export default function AdminClient({
+  quotes: initialQuotes,
+  stats,
+}: AdminClientProps) {
+  const [quotes, setQuotes] = useState(initialQuotes);
+  const [filter, setFilter] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const filteredQuotes = filter
+    ? quotes.filter((q) => q.status === filter)
+    : quotes;
+
+  const updateStatus = async (quoteId: string, status: string) => {
+    setUpdatingId(quoteId);
+    try {
+      const res = await fetch(`/api/admin/quotes/${quoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.ok) {
+        const { quote } = await res.json();
+        setQuotes((prev) =>
+          prev.map((q) =>
+            q.id === quoteId
+              ? { ...q, status: quote.status, publishedAt: quote.publishedAt }
+              : q,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const deleteQuote = async (quoteId: string) => {
+    if (!confirm("Delete this quote permanently?")) return;
+
+    try {
+      const res = await fetch(`/api/admin/quotes/${quoteId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setQuotes((prev) => prev.filter((q) => q.id !== quoteId));
+      }
+    } catch (err) {
+      console.error("Failed to delete:", err);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background text-white">
+      {/* Header */}
+      <header className="border-b border-border px-8 py-6 flex justify-between items-center">
+        <div className="flex items-center gap-4">
+          <Link
+            href="/"
+            className="text-xs uppercase tracking-[0.2em] text-muted hover:text-white transition-colors"
+          >
+            &larr; Grid
+          </Link>
+          <span className="text-border">/</span>
+          <h1 className="text-sm font-medium uppercase tracking-widest">
+            Admin Panel
+          </h1>
+        </div>
+        <button
+          onClick={() => signOut()}
+          className="text-xs uppercase tracking-[0.1em] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
+        >
+          Sign Out
+        </button>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-8 py-12">
+        {/* Stats */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
+          {[
+            { label: "Total", value: stats.total, color: "#ededed" },
+            {
+              label: "Pending",
+              value: stats.pending,
+              color: STATUS_COLORS.PENDING,
+            },
+            {
+              label: "In Review",
+              value: stats.inReview,
+              color: STATUS_COLORS.IN_REVIEW,
+            },
+            {
+              label: "Published",
+              value: stats.published,
+              color: STATUS_COLORS.PUBLISHED,
+            },
+            {
+              label: "Rejected",
+              value: stats.rejected,
+              color: STATUS_COLORS.REJECTED,
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="border border-[var(--border)] rounded-lg p-4"
+            >
+              <p className="text-2xl font-light" style={{ color: stat.color }}>
+                {stat.value}
+              </p>
+              <p className="text-xs uppercase tracking-[0.15em] text-[var(--muted)] mt-1">
+                {stat.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Filters */}
+        <div className="flex gap-2 mb-8 flex-wrap">
+          <button
+            onClick={() => setFilter(null)}
+            className={`px-4 py-2 text-xs uppercase tracking-[0.1em] rounded-full border transition-all cursor-pointer ${
+              filter === null
+                ? "border-white bg-white/10 text-white"
+                : "border-[var(--border)] text-[var(--muted)] hover:text-white"
+            }`}
+          >
+            All ({quotes.length})
+          </button>
+          {STATUS_OPTIONS.map((s) => {
+            const count = quotes.filter((q) => q.status === s).length;
+            return (
+              <button
+                key={s}
+                onClick={() => setFilter(filter === s ? null : s)}
+                className={`px-4 py-2 text-xs uppercase tracking-[0.1em] rounded-full border transition-all cursor-pointer ${
+                  filter === s
+                    ? `border-current text-[${STATUS_COLORS[s]}]`
+                    : "border-[var(--border)] text-[var(--muted)] hover:text-white"
+                }`}
+                style={
+                  filter === s
+                    ? { color: STATUS_COLORS[s], borderColor: STATUS_COLORS[s] }
+                    : {}
+                }
+              >
+                {s.replace("_", " ")} ({count})
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Quotes */}
+        <div className="space-y-2">
+          {filteredQuotes.map((quote) => (
+            <div
+              key={quote.id}
+              className="border border-[var(--border)] rounded-lg overflow-hidden hover:border-white/10 transition-colors"
+            >
+              {/* Summary row */}
+              <div
+                className="flex items-center gap-4 px-5 py-4 cursor-pointer"
+                onClick={() =>
+                  setExpandedId(expandedId === quote.id ? null : quote.id)
+                }
+              >
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor: STATUS_COLORS[quote.status] || "#999",
+                  }}
+                />
+
+                <p className="flex-1 text-sm font-light truncate min-w-0">
+                  &ldquo;{quote.text}&rdquo;
+                </p>
+
+                <span className="text-xs text-[var(--muted)] shrink-0">
+                  — {quote.attribution}
+                </span>
+
+                <span
+                  className="text-[0.6rem] uppercase tracking-[0.15em] font-medium px-2 py-0.5 rounded shrink-0"
+                  style={{
+                    color: STATUS_COLORS[quote.status],
+                    backgroundColor: `${STATUS_COLORS[quote.status]}15`,
+                  }}
+                >
+                  {quote.status.replace("_", " ")}
+                </span>
+
+                <span className="text-[0.6rem] text-[var(--muted)] shrink-0">
+                  {new Date(quote.createdAt).toLocaleDateString()}
+                </span>
+
+                <span className="text-[var(--muted)] text-xs">
+                  {expandedId === quote.id ? "▲" : "▼"}
+                </span>
+              </div>
+
+              {/* Expanded detail */}
+              {expandedId === quote.id && (
+                <div className="border-t border-[var(--border)] px-5 py-5 space-y-4 bg-white/[0.02]">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                        Attribution
+                      </span>
+                      <span>{quote.attribution}</span>
+                    </div>
+                    {quote.socialHandle && (
+                      <div>
+                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                          Social
+                        </span>
+                        <span>{quote.socialHandle}</span>
+                      </div>
+                    )}
+                    {quote.mood && (
+                      <div>
+                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                          Mood
+                        </span>
+                        <span>{quote.mood}</span>
+                      </div>
+                    )}
+                    {quote.fontPrimary && (
+                      <div>
+                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                          Font
+                        </span>
+                        <span>{quote.fontPrimary}</span>
+                      </div>
+                    )}
+                    {quote.submitter && (
+                      <div>
+                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                          Submitter
+                        </span>
+                        <span>
+                          {quote.submitter.name} ({quote.submitter.email})
+                        </span>
+                      </div>
+                    )}
+                    {quote.curator && (
+                      <div>
+                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                          Curated by
+                        </span>
+                        <span>{quote.curator.name}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-sm font-light leading-relaxed p-4 bg-black/20 rounded-lg">
+                    &ldquo;{quote.text}&rdquo;
+                  </div>
+
+                  {/* Status actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-[var(--muted)] uppercase tracking-wider mr-2">
+                      Set Status:
+                    </span>
+                    {STATUS_OPTIONS.map((s) => (
+                      <button
+                        key={s}
+                        disabled={quote.status === s || updatingId === quote.id}
+                        onClick={() => updateStatus(quote.id, s)}
+                        className="px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.1em] rounded border border-[var(--border)] text-[var(--muted)] hover:text-white hover:border-white/20 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                        style={
+                          quote.status === s
+                            ? {
+                                color: STATUS_COLORS[s],
+                                borderColor: STATUS_COLORS[s],
+                              }
+                            : {}
+                        }
+                      >
+                        {s.replace("_", " ")}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => deleteQuote(quote.id)}
+                      className="ml-auto px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.1em] rounded border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {filteredQuotes.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-[var(--muted)]">No quotes match this filter.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

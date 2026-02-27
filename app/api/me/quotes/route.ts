@@ -1,0 +1,54 @@
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/db";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
+
+// GET /api/me/quotes — list the current user's submitted quotes
+export async function GET(request: NextRequest) {
+  const session = await auth.api.getSession({ headers: await headers() });
+
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const page = parseInt(searchParams.get("page") || "1", 10);
+  const limit = Math.min(parseInt(searchParams.get("limit") || "20", 10), 50);
+
+  const where = { submitterId: session.user.id };
+
+  const [quotes, total] = await Promise.all([
+    prisma.quote.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: (page - 1) * limit,
+      take: limit,
+      select: {
+        id: true,
+        text: true,
+        attribution: true,
+        socialHandle: true,
+        authorPhoto: true,
+        fontPrimary: true,
+        fontSecondary: true,
+        colorPalette: true,
+        mood: true,
+        status: true,
+        cardImageUrl: true,
+        publishedAt: true,
+        createdAt: true,
+      },
+    }),
+    prisma.quote.count({ where }),
+  ]);
+
+  return NextResponse.json({
+    quotes,
+    pagination: {
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+    },
+  });
+}
