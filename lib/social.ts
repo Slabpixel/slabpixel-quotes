@@ -36,9 +36,7 @@ export function getSocialIconSvg(
 ): string | null {
   const path = SVG_PATHS[platform];
   if (!path) return null;
-  const encoded = color.startsWith("#")
-    ? color
-    : color;
+  const encoded = color.startsWith("#") ? color : color;
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${encoded}"><path d="${path}"/></svg>`;
 }
 
@@ -102,4 +100,3 @@ export function parseSocialHandle(raw: string): SocialInfo {
 
   return { platform, username };
 }
-

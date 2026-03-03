@@ -4,7 +4,11 @@
  */
 
 import { type QuoteData } from "@/types/quote";
-import { parseSocialHandle, loadSocialIconImage, type SocialPlatform } from "@/lib/social";
+import {
+  parseSocialHandle,
+  loadSocialIconImage,
+  type SocialPlatform,
+} from "@/lib/social";
 
 // Cache loaded icon images by "platform:color" key to avoid redundant fetches
 const iconCache = new Map<string, HTMLImageElement | null>();
@@ -283,7 +287,9 @@ export async function buildTextureAtlas(
   await Promise.all(fontNames.map((f) => ensureFontLoaded(f)));
 
   // Render all cards (async so icons can be loaded)
-  const cards = await Promise.all(quotes.map((q, i) => renderCardToCanvas(q, i)));
+  const cards = await Promise.all(
+    quotes.map((q, i) => renderCardToCanvas(q, i)),
+  );
 
   // Calculate atlas dimensions — arrange in a grid
   const cols = Math.ceil(Math.sqrt(cards.length));
