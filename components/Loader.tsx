@@ -5,15 +5,19 @@ import gsap from "gsap";
 
 interface LoaderProps {
   onComplete: () => void;
+  /** Called at the very start of the fade-out (before it finishes) */
+  onFadeStart?: () => void;
 }
 
-export default function Loader({ onComplete }: LoaderProps) {
+export default function Loader({ onComplete, onFadeStart }: LoaderProps) {
   const loaderRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const tl = gsap.timeline({
       onComplete: () => {
+        // Fire entrance immediately as fade begins
+        onFadeStart?.();
         gsap.to(loaderRef.current, {
           opacity: 0,
           duration: 0.5,

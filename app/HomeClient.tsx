@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { type QuoteData } from "@/types/quote";
-import DraggableQuoteGrid from "@/components/DraggableQuoteGrid";
+import QuoteCanvasGrid from "@/components/QuoteCanvasGrid";
 import SiteHeader from "@/components/SiteHeader";
 import Loader from "@/components/Loader";
 
@@ -120,6 +120,7 @@ interface HomeClientProps {
 
 export default function HomeClient({ quotes }: HomeClientProps) {
   const [showLoader, setShowLoader] = useState(true);
+  const entranceRef = useRef<(() => void) | null>(null);
 
   const displayQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES;
 
@@ -127,11 +128,32 @@ export default function HomeClient({ quotes }: HomeClientProps) {
     setShowLoader(false);
   }, []);
 
+  const handleLoaderFadeStart = useCallback(() => {
+    // Fire entrance immediately when fade begins — no delay
+    entranceRef.current?.();
+  }, []);
+
+  const handleSceneReady = useCallback(
+    (controls: { playEntrance: () => void }) => {
+      entranceRef.current = controls.playEntrance;
+      // If loader already finished (e.g. fast load), play immediately
+      if (!showLoader) {
+        controls.playEntrance();
+      }
+    },
+    [showLoader],
+  );
+
   return (
     <>
-      {showLoader && <Loader onComplete={handleLoaderComplete} />}
+      {showLoader && (
+        <Loader
+          onComplete={handleLoaderComplete}
+          onFadeStart={handleLoaderFadeStart}
+        />
+      )}
       <SiteHeader />
-      <DraggableQuoteGrid quotes={displayQuotes} />
+      <QuoteCanvasGrid quotes={displayQuotes} onReady={handleSceneReady} />
     </>
   );
 }
