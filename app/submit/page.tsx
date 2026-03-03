@@ -97,27 +97,27 @@ export default function SubmitPage() {
 
   if (isSubmitted) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--background)]">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6 px-6">
           <div className="text-5xl">&#x2713;</div>
           <h1 className="text-2xl font-light text-white tracking-tight">
             Quote Submitted
           </h1>
-          <p className="text-[var(--muted)] max-w-md">
+          <p className="text-muted max-w-md">
             Your quote has been submitted for review. Our design team will
             curate it and, if approved, transform it into a visual artifact.
           </p>
           <div className="flex gap-4 justify-center pt-4">
             <Link
               href="/"
-              className="px-6 py-3 text-sm uppercase tracking-widest text-white border border-[var(--border)] rounded-lg hover:bg-white/5 transition-colors"
+              className="px-6 py-3 text-sm uppercase tracking-widest text-white border border-border rounded-lg hover:bg-white/5 transition-colors"
             >
               Back to Grid
             </Link>
             {session && (
               <Link
                 href="/dashboard"
-                className="px-6 py-3 text-sm uppercase tracking-widest text-[var(--background)] bg-white rounded-lg hover:bg-white/90 transition-colors"
+                className="px-6 py-3 text-sm uppercase tracking-widest text-background bg-white rounded-lg hover:bg-white/90 transition-colors"
               >
                 My Submissions
               </Link>
@@ -129,12 +129,12 @@ export default function SubmitPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--background)] flex">
+    <div className="min-h-screen bg-background flex">
       {/* Left: Form */}
       <div className="flex-1 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 max-w-2xl">
         <Link
           href="/"
-          className="text-xs uppercase tracking-[0.2em] text-[var(--muted)] mb-12 hover:text-white transition-colors inline-block"
+          className="text-xs uppercase tracking-widest text-muted mb-12 hover:text-white transition-colors inline-block"
         >
           &larr; Back
         </Link>
@@ -142,7 +142,7 @@ export default function SubmitPage() {
         <h1 className="text-3xl font-light text-white mb-2 tracking-tight">
           Submit a Quote
         </h1>
-        <p className="text-[var(--muted)] text-sm mb-10">
+        <p className="text-muted text-sm mb-10">
           Share words that matter. Shape how they look and feel.
         </p>
 
@@ -155,7 +155,7 @@ export default function SubmitPage() {
         <form onSubmit={handleSubmit} className="space-y-8">
           {/* Quote text */}
           <div>
-            <label className="block text-xs uppercase tracking-[0.15em] text-[var(--muted)] mb-3">
+            <label className="block text-xs uppercase tracking-widest text-muted mb-3">
               The Quote *
             </label>
             <textarea
@@ -165,10 +165,10 @@ export default function SubmitPage() {
               minLength={10}
               maxLength={500}
               rows={4}
-              className="w-full bg-transparent border border-[var(--border)] rounded-lg px-4 py-3 text-white text-lg font-light resize-none focus:outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted)]/30"
+              className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-white text-lg font-light resize-none focus:outline-none focus:border-accent transition-colors placeholder:text-muted/30"
               placeholder="Type your quote here..."
             />
-            <span className="text-xs text-[var(--muted)] mt-1 block">
+            <span className="text-xs text-muted mt-1 block">
               {text.length}/500
             </span>
           </div>
@@ -176,7 +176,7 @@ export default function SubmitPage() {
           {/* Attribution */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-xs uppercase tracking-[0.15em] text-[var(--muted)] mb-3">
+              <label className="block text-xs uppercase tracking-widest text-muted mb-3">
                 Attribution *
               </label>
               <input
@@ -185,12 +185,12 @@ export default function SubmitPage() {
                 onChange={(e) => setAttribution(e.target.value)}
                 required
                 maxLength={100}
-                className="w-full bg-transparent border border-[var(--border)] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted)]/30"
+                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent transition-colors placeholder:text-muted/30"
                 placeholder="Name or alias"
               />
             </div>
             <div>
-              <label className="block text-xs uppercase tracking-[0.15em] text-[var(--muted)] mb-3">
+              <label className="block text-xs uppercase tracking-widest text-muted mb-3">
                 Social Handle
               </label>
               <input
@@ -198,7 +198,7 @@ export default function SubmitPage() {
                 value={socialHandle}
                 onChange={(e) => setSocialHandle(e.target.value)}
                 maxLength={100}
-                className="w-full bg-transparent border border-[var(--border)] rounded-lg px-4 py-3 text-white focus:outline-none focus:border-[var(--accent)] transition-colors placeholder:text-[var(--muted)]/30"
+                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent transition-colors placeholder:text-muted/30"
                 placeholder="@handle"
               />
             </div>
@@ -206,7 +206,7 @@ export default function SubmitPage() {
 
           {/* Mood */}
           <div>
-            <label className="block text-xs uppercase tracking-[0.15em] text-[var(--muted)] mb-3">
+            <label className="block text-xs uppercase tracking-widest text-muted mb-3">
               Mood
             </label>
             <div className="flex flex-wrap gap-2">
@@ -215,10 +215,10 @@ export default function SubmitPage() {
                   key={m}
                   type="button"
                   onClick={() => setMood(mood === m ? null : m)}
-                  className={`px-4 py-2 text-xs uppercase tracking-[0.1em] rounded-full border transition-all cursor-pointer ${
+                  className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
                     mood === m
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                      : "border-[var(--border)] text-[var(--muted)] hover:border-white/30 hover:text-white"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-border text-muted hover:border-white/30 hover:text-white"
                   }`}
                 >
                   {m}
@@ -229,7 +229,7 @@ export default function SubmitPage() {
 
           {/* Font */}
           <div>
-            <label className="block text-xs uppercase tracking-[0.15em] text-[var(--muted)] mb-3">
+            <label className="block text-xs uppercase tracking-widest text-muted mb-3">
               Font Style
             </label>
             <div className="flex flex-wrap gap-2">
@@ -240,8 +240,8 @@ export default function SubmitPage() {
                   onClick={() => setFontPrimary(fontPrimary === f ? null : f)}
                   className={`px-4 py-2 text-xs rounded-full border transition-all cursor-pointer ${
                     fontPrimary === f
-                      ? "border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]"
-                      : "border-[var(--border)] text-[var(--muted)] hover:border-white/30 hover:text-white"
+                      ? "border-accent bg-accent/10 text-accent"
+                      : "border-border text-muted hover:border-white/30 hover:text-white"
                   }`}
                 >
                   {f}
@@ -252,7 +252,7 @@ export default function SubmitPage() {
 
           {/* Color Palette */}
           <div>
-            <label className="block text-xs uppercase tracking-[0.15em] text-[var(--muted)] mb-3">
+            <label className="block text-xs uppercase tracking-widest text-muted mb-3">
               Color Palette
             </label>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -265,8 +265,8 @@ export default function SubmitPage() {
                   }
                   className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all cursor-pointer ${
                     selectedPalette === idx
-                      ? "border-[var(--accent)]"
-                      : "border-[var(--border)] hover:border-white/20"
+                      ? "border-accent"
+                      : "border-border hover:border-white/20"
                   }`}
                 >
                   <div className="flex gap-1">
@@ -278,7 +278,7 @@ export default function SubmitPage() {
                       />
                     ))}
                   </div>
-                  <span className="text-[0.65rem] text-[var(--muted)] uppercase tracking-wider">
+                  <span className="text-[0.65rem] text-muted uppercase tracking-wider">
                     {p.name}
                   </span>
                 </button>
@@ -289,17 +289,14 @@ export default function SubmitPage() {
           <button
             type="submit"
             disabled={isSubmitting || !text || !attribution}
-            className="w-full py-4 bg-white text-background font-medium text-sm uppercase tracking-[0.15em] rounded-lg hover:bg-white/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-4 bg-white text-background font-medium text-sm uppercase tracking-widest rounded-lg hover:bg-white/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? "Submitting..." : "Submit Quote"}
           </button>
 
           {!session && (
-            <p className="text-xs text-[var(--muted)] text-center">
-              <Link
-                href="/sign-in"
-                className="text-[var(--accent)] hover:underline"
-              >
+            <p className="text-xs text-muted text-center">
+              <Link href="/sign-in" className="text-accent hover:underline">
                 Sign in
               </Link>{" "}
               to track your submissions in your dashboard.

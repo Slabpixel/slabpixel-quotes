@@ -97,7 +97,7 @@ export default function QuoteCanvasGrid({
           transition: "opacity 0.6s ease",
         }}
       >
-        Drag to explore &middot; Scroll to dive &middot; Click to read
+        Drag to explore &middot; Scroll to dive
       </div>
 
       <DetailOverlay quote={selectedQuote} onClose={handleCloseOverlay} />

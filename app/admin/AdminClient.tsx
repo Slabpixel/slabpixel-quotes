@@ -125,7 +125,7 @@ export default function AdminClient({
         <div className="flex items-center gap-4">
           <Link
             href="/"
-            className="text-xs uppercase tracking-[0.2em] text-muted hover:text-white transition-colors"
+            className="text-xs uppercase tracking-widest text-muted hover:text-white transition-colors"
           >
             &larr; Grid
           </Link>
@@ -136,7 +136,7 @@ export default function AdminClient({
         </div>
         <button
           onClick={() => signOut()}
-          className="text-xs uppercase tracking-[0.1em] text-[var(--muted)] hover:text-white transition-colors cursor-pointer"
+          className="text-xs uppercase tracking-widest text-muted hover:text-white transition-colors cursor-pointer"
         >
           Sign Out
         </button>
@@ -170,12 +170,12 @@ export default function AdminClient({
           ].map((stat) => (
             <div
               key={stat.label}
-              className="border border-[var(--border)] rounded-lg p-4"
+              className="border border-border rounded-lg p-4"
             >
               <p className="text-2xl font-light" style={{ color: stat.color }}>
                 {stat.value}
               </p>
-              <p className="text-xs uppercase tracking-[0.15em] text-[var(--muted)] mt-1">
+              <p className="text-xs uppercase tracking-widest text-muted mt-1">
                 {stat.label}
               </p>
             </div>
@@ -186,10 +186,10 @@ export default function AdminClient({
         <div className="flex gap-2 mb-8 flex-wrap">
           <button
             onClick={() => setFilter(null)}
-            className={`px-4 py-2 text-xs uppercase tracking-[0.1em] rounded-full border transition-all cursor-pointer ${
+            className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
               filter === null
                 ? "border-white bg-white/10 text-white"
-                : "border-[var(--border)] text-[var(--muted)] hover:text-white"
+                : "border-border text-muted hover:text-white"
             }`}
           >
             All ({quotes.length})
@@ -200,10 +200,10 @@ export default function AdminClient({
               <button
                 key={s}
                 onClick={() => setFilter(filter === s ? null : s)}
-                className={`px-4 py-2 text-xs uppercase tracking-[0.1em] rounded-full border transition-all cursor-pointer ${
+                className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
                   filter === s
                     ? `border-current text-[${STATUS_COLORS[s]}]`
-                    : "border-[var(--border)] text-[var(--muted)] hover:text-white"
+                    : "border-border text-muted hover:text-white"
                 }`}
                 style={
                   filter === s
@@ -222,7 +222,7 @@ export default function AdminClient({
           {filteredQuotes.map((quote) => (
             <div
               key={quote.id}
-              className="border border-[var(--border)] rounded-lg overflow-hidden hover:border-white/10 transition-colors"
+              className="border border-border rounded-lg overflow-hidden hover:border-white/10 transition-colors"
             >
               {/* Summary row */}
               <div
@@ -242,12 +242,12 @@ export default function AdminClient({
                   &ldquo;{quote.text}&rdquo;
                 </p>
 
-                <span className="text-xs text-[var(--muted)] shrink-0">
+                <span className="text-xs text-muted shrink-0">
                   — {quote.attribution}
                 </span>
 
                 <span
-                  className="text-[0.6rem] uppercase tracking-[0.15em] font-medium px-2 py-0.5 rounded shrink-0"
+                  className="text-[0.6rem] uppercase tracking-widest font-medium px-2 py-0.5 rounded shrink-0"
                   style={{
                     color: STATUS_COLORS[quote.status],
                     backgroundColor: `${STATUS_COLORS[quote.status]}15`,
@@ -256,28 +256,28 @@ export default function AdminClient({
                   {quote.status.replace("_", " ")}
                 </span>
 
-                <span className="text-[0.6rem] text-[var(--muted)] shrink-0">
+                <span className="text-[0.6rem] text-muted shrink-0">
                   {new Date(quote.createdAt).toLocaleDateString()}
                 </span>
 
-                <span className="text-[var(--muted)] text-xs">
+                <span className="text-muted text-xs">
                   {expandedId === quote.id ? "▲" : "▼"}
                 </span>
               </div>
 
               {/* Expanded detail */}
               {expandedId === quote.id && (
-                <div className="border-t border-[var(--border)] px-5 py-5 space-y-4 bg-white/[0.02]">
+                <div className="border-t border-border px-5 py-5 space-y-4 bg-white/2">
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
                     <div>
-                      <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                      <span className="text-muted uppercase tracking-wider block mb-1">
                         Attribution
                       </span>
                       <span>{quote.attribution}</span>
                     </div>
                     {quote.socialHandle && (
                       <div>
-                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                        <span className="text-muted uppercase tracking-wider block mb-1">
                           Social
                         </span>
                         <span>{quote.socialHandle}</span>
@@ -285,7 +285,7 @@ export default function AdminClient({
                     )}
                     {quote.mood && (
                       <div>
-                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                        <span className="text-muted uppercase tracking-wider block mb-1">
                           Mood
                         </span>
                         <span>{quote.mood}</span>
@@ -293,7 +293,7 @@ export default function AdminClient({
                     )}
                     {quote.fontPrimary && (
                       <div>
-                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                        <span className="text-muted uppercase tracking-wider block mb-1">
                           Font
                         </span>
                         <span>{quote.fontPrimary}</span>
@@ -301,7 +301,7 @@ export default function AdminClient({
                     )}
                     {quote.submitter && (
                       <div>
-                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                        <span className="text-muted uppercase tracking-wider block mb-1">
                           Submitter
                         </span>
                         <span>
@@ -311,7 +311,7 @@ export default function AdminClient({
                     )}
                     {quote.curator && (
                       <div>
-                        <span className="text-[var(--muted)] uppercase tracking-wider block mb-1">
+                        <span className="text-muted uppercase tracking-wider block mb-1">
                           Curated by
                         </span>
                         <span>{quote.curator.name}</span>
@@ -325,7 +325,7 @@ export default function AdminClient({
 
                   {/* Status actions */}
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-[var(--muted)] uppercase tracking-wider mr-2">
+                    <span className="text-xs text-muted uppercase tracking-wider mr-2">
                       Set Status:
                     </span>
                     {STATUS_OPTIONS.map((s) => (
@@ -333,7 +333,7 @@ export default function AdminClient({
                         key={s}
                         disabled={quote.status === s || updatingId === quote.id}
                         onClick={() => updateStatus(quote.id, s)}
-                        className="px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.1em] rounded border border-[var(--border)] text-[var(--muted)] hover:text-white hover:border-white/20 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                        className="px-3 py-1.5 text-[0.65rem] uppercase tracking-widest rounded border border-border text-muted hover:text-white hover:border-white/20 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
                         style={
                           quote.status === s
                             ? {
@@ -349,7 +349,7 @@ export default function AdminClient({
 
                     <button
                       onClick={() => deleteQuote(quote.id)}
-                      className="ml-auto px-3 py-1.5 text-[0.65rem] uppercase tracking-[0.1em] rounded border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
+                      className="ml-auto px-3 py-1.5 text-[0.65rem] uppercase tracking-widest rounded border border-red-500/20 text-red-400 hover:bg-red-500/10 transition-all cursor-pointer"
                     >
                       Delete
                     </button>
@@ -362,7 +362,7 @@ export default function AdminClient({
 
         {filteredQuotes.length === 0 && (
           <div className="text-center py-20">
-            <p className="text-[var(--muted)]">No quotes match this filter.</p>
+            <p className="text-muted">No quotes match this filter.</p>
           </div>
         )}
       </div>

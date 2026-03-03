@@ -47,7 +47,7 @@ export interface TextureAtlas {
 const CARD_WIDTH = 500;
 const CARD_HEIGHT = 400;
 const CARD_RADIUS = 24;
-const CARD_PADDING = 40;
+const CARD_PADDING = 50;
 
 /**
  * Wait for a Google Font to finish loading, with a timeout.
@@ -206,16 +206,17 @@ export function renderCardToCanvas(
   const quoteText = `\u201C${quote.text}\u201D`;
   const lines = wrapText(ctx, quoteText, maxTextWidth, lineHeight);
 
-  const textStartY = CARD_PADDING + 40;
+  const textStartY = CARD_PADDING + 20;
   lines.forEach((line, i) => {
     ctx.fillText(line, CARD_PADDING, textStartY + i * lineHeight);
   });
 
+  // Footer pinned to bottom (like flex space-between)
+  const footerBottomMargin = CARD_PADDING;
+  const handleY = CARD_HEIGHT - footerBottomMargin;
+  const attrY = quote.socialHandle ? handleY - 22 : handleY;
+
   // Attribution
-  const attrY = Math.min(
-    textStartY + lines.length * lineHeight + 30,
-    CARD_HEIGHT - CARD_PADDING - 50,
-  );
   ctx.font = `600 13px "Inter", "Helvetica Neue", sans-serif`;
   ctx.fillStyle = accentColor;
   ctx.letterSpacing = "1.5px";
