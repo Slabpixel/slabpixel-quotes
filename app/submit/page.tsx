@@ -1,8 +1,15 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useSession } from "@/lib/auth-client";
 import Link from "next/link";
+import { parseSocialHandle, SVG_PATHS } from "@/lib/social";
+
+const SOCIAL_PLACEHOLDERS = [
+  "https://www.tiktok.com/@username",
+  "https://www.instagram.com/username",
+  "https://x.com/username",
+];
 
 const MOOD_OPTIONS = [
   "bold",
@@ -54,11 +61,40 @@ export default function SubmitPage() {
   const [fontPrimary, setFontPrimary] = useState<string | null>(null);
   const [selectedPalette, setSelectedPalette] = useState<number | null>(null);
 
+  // Cycling placeholder for social handle
+  const [placeholderIdx, setPlaceholderIdx] = useState(0);
+  const placeholderTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    placeholderTimer.current = setInterval(() => {
+      setPlaceholderIdx((i) => (i + 1) % SOCIAL_PLACEHOLDERS.length);
+    }, 2200);
+    return () => {
+      if (placeholderTimer.current) clearInterval(placeholderTimer.current);
+    };
+  }, []);
+
+  // Load Google Font when a font is selected, so the preview reflects it
+  useEffect(() => {
+    if (!fontPrimary) return;
+    const id = `gfont-${fontPrimary.replace(/\s+/g, "-")}`;
+    if (!document.getElementById(id)) {
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontPrimary)}:wght@200;300;400;500;600;700&display=swap`;
+      document.head.appendChild(link);
+    }
+  }, [fontPrimary]);
+
   // Live preview colors
   const palette =
     selectedPalette !== null
       ? PALETTE_PRESETS[selectedPalette].colors
       : ["#1a1a2e", "#e94560", "#ffffff", "#999999"];
+
+  // Parsed social info for preview
+  const socialInfo = socialHandle ? parseSocialHandle(socialHandle) : null;
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -99,8 +135,8 @@ export default function SubmitPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-6 px-6">
-          <div className="text-5xl">&#x2713;</div>
-          <h1 className="text-2xl font-light text-white tracking-tight">
+          <div className="text-5xl text-foreground">&#x2713;</div>
+          <h1 className="text-2xl font-light text-foreground tracking-tight">
             Quote Submitted
           </h1>
           <p className="text-muted max-w-md">
@@ -110,14 +146,14 @@ export default function SubmitPage() {
           <div className="flex gap-4 justify-center pt-4">
             <Link
               href="/"
-              className="px-6 py-3 text-sm uppercase tracking-widest text-white border border-border rounded-lg hover:bg-white/5 transition-colors"
+              className="px-6 py-3 text-sm uppercase tracking-widest text-foreground border border-border rounded-lg hover:bg-foreground/5 transition-colors"
             >
               Back to Grid
             </Link>
             {session && (
               <Link
                 href="/dashboard"
-                className="px-6 py-3 text-sm uppercase tracking-widest text-background bg-white rounded-lg hover:bg-white/90 transition-colors"
+                className="px-6 py-3 text-sm uppercase tracking-widest text-background bg-foreground rounded-lg hover:bg-foreground/90 transition-colors"
               >
                 My Submissions
               </Link>
@@ -134,12 +170,12 @@ export default function SubmitPage() {
       <div className="flex-1 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 max-w-2xl">
         <Link
           href="/"
-          className="text-xs uppercase tracking-widest text-muted mb-12 hover:text-white transition-colors inline-block"
+          className="text-xs uppercase tracking-widest text-muted mb-12 hover:text-foreground transition-colors inline-block"
         >
           &larr; Back
         </Link>
 
-        <h1 className="text-3xl font-light text-white mb-2 tracking-tight">
+        <h1 className="text-3xl font-light text-foreground mb-2 tracking-tight">
           Submit a Quote
         </h1>
         <p className="text-muted text-sm mb-10">
@@ -147,7 +183,7 @@ export default function SubmitPage() {
         </p>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400 text-sm">
+          <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-500 text-sm">
             {error}
           </div>
         )}
@@ -165,7 +201,7 @@ export default function SubmitPage() {
               minLength={10}
               maxLength={500}
               rows={4}
-              className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-white text-lg font-light resize-none focus:outline-none focus:border-accent transition-colors placeholder:text-muted/30"
+              className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-foreground text-lg font-light resize-none focus:outline-none focus:border-accent transition-colors placeholder:text-muted/40"
               placeholder="Type your quote here..."
             />
             <span className="text-xs text-muted mt-1 block">
@@ -185,7 +221,7 @@ export default function SubmitPage() {
                 onChange={(e) => setAttribution(e.target.value)}
                 required
                 maxLength={100}
-                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent transition-colors placeholder:text-muted/30"
+                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-accent transition-colors placeholder:text-muted/40"
                 placeholder="Name or alias"
               />
             </div>
@@ -194,12 +230,12 @@ export default function SubmitPage() {
                 Social Handle
               </label>
               <input
-                type="text"
+                type="url"
                 value={socialHandle}
                 onChange={(e) => setSocialHandle(e.target.value)}
-                maxLength={100}
-                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-white focus:outline-none focus:border-accent transition-colors placeholder:text-muted/30"
-                placeholder="@handle"
+                maxLength={200}
+                className="w-full bg-transparent border border-border rounded-lg px-4 py-3 text-foreground focus:outline-none focus:border-accent transition-colors placeholder:text-muted/40"
+                placeholder={SOCIAL_PLACEHOLDERS[placeholderIdx]}
               />
             </div>
           </div>
@@ -218,7 +254,7 @@ export default function SubmitPage() {
                   className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
                     mood === m
                       ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted hover:border-white/30 hover:text-white"
+                      : "border-border text-muted hover:border-foreground/30 hover:text-foreground"
                   }`}
                 >
                   {m}
@@ -241,8 +277,9 @@ export default function SubmitPage() {
                   className={`px-4 py-2 text-xs rounded-full border transition-all cursor-pointer ${
                     fontPrimary === f
                       ? "border-accent bg-accent/10 text-accent"
-                      : "border-border text-muted hover:border-white/30 hover:text-white"
+                      : "border-border text-muted hover:border-foreground/30 hover:text-foreground"
                   }`}
+                  style={{ fontFamily: f }}
                 >
                   {f}
                 </button>
@@ -266,7 +303,7 @@ export default function SubmitPage() {
                   className={`flex flex-col items-center gap-2 p-3 rounded-lg border transition-all cursor-pointer ${
                     selectedPalette === idx
                       ? "border-accent"
-                      : "border-border hover:border-white/20"
+                      : "border-border hover:border-foreground/20"
                   }`}
                 >
                   <div className="flex gap-1">
@@ -289,7 +326,7 @@ export default function SubmitPage() {
           <button
             type="submit"
             disabled={isSubmitting || !text || !attribution}
-            className="w-full py-4 bg-white text-background font-medium text-sm uppercase tracking-widest rounded-lg hover:bg-white/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
+            className="w-full py-4 bg-foreground text-background font-medium text-sm uppercase tracking-widest rounded-lg hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
           >
             {isSubmitting ? "Submitting..." : "Submit Quote"}
           </button>
@@ -307,34 +344,49 @@ export default function SubmitPage() {
 
       {/* Right: Live Preview */}
       <div className="hidden lg:flex flex-1 items-center justify-center p-12">
+        {/* Match actual WebGL card: 500×400 (5:4 landscape) */}
         <div
           className="quote-card"
+          data-mood={mood ?? undefined}
           style={{
             backgroundColor: palette[0],
             color: palette[2],
-            width: "22vw",
-            minHeight: "28vw",
+            width: "24vw",
+            height: "calc(24vw * 4 / 5)",
+            minHeight: "unset",
             position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "space-between",
           }}
         >
+          {/* Always-on radial gradient */}
           <div
             style={{
               position: "absolute",
               inset: 0,
-              background: `radial-gradient(ellipse at bottom right, ${palette[1]}15 0%, transparent 70%)`,
+              background: `radial-gradient(ellipse at bottom right, ${palette[1]}18 0%, transparent 70%)`,
               pointerEvents: "none",
               borderRadius: "inherit",
             }}
           />
 
+          {/* Mood CSS-effect layer — mirrors real card */}
           {mood && (
-            <span className="quote-card__mood" style={{ color: palette[1] }}>
-              {mood}
-            </span>
+            <div
+              className={`quote-card__mood-fx quote-card__mood-fx--${mood}`}
+            />
           )}
 
           <div style={{ position: "relative", zIndex: 1 }}>
-            <p className="quote-card__text">
+            <p
+              className="quote-card__text"
+              style={{
+                fontFamily: fontPrimary ? `"${fontPrimary}", serif` : undefined,
+                fontWeight:
+                  mood === "bold" || mood === "intense" ? 500 : undefined,
+              }}
+            >
               &ldquo;{text || "Your quote will appear here..."}&rdquo;
             </p>
           </div>
@@ -349,12 +401,32 @@ export default function SubmitPage() {
             >
               {attribution || "Attribution"}
             </span>
-            {socialHandle && (
+            {socialInfo && (
               <span
                 className="quote-card__handle"
-                style={{ color: palette[2] }}
+                style={{
+                  color: palette[3],
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  opacity: 1,
+                }}
               >
-                {socialHandle}
+                {socialInfo.platform !== "unknown" &&
+                  SVG_PATHS[socialInfo.platform] && (
+                    <svg
+                      viewBox="0 0 24 24"
+                      style={{
+                        width: "0.75em",
+                        height: "0.75em",
+                        fill: "currentColor",
+                        flexShrink: 0,
+                      }}
+                    >
+                      <path d={SVG_PATHS[socialInfo.platform]} />
+                    </svg>
+                  )}
+                {socialInfo.username}
               </span>
             )}
           </div>

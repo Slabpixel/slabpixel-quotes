@@ -4,6 +4,20 @@
  */
 
 import { type QuoteData } from "@/types/quote";
+import { parseSocialHandle, loadSocialIconImage, type SocialPlatform } from "@/lib/social";
+
+// Cache loaded icon images by "platform:color" key to avoid redundant fetches
+const iconCache = new Map<string, HTMLImageElement | null>();
+async function getCachedIcon(
+  platform: SocialPlatform,
+  color: string,
+): Promise<HTMLImageElement | null> {
+  const key = `${platform}:${color}`;
+  if (iconCache.has(key)) return iconCache.get(key)!;
+  const img = await loadSocialIconImage(platform, color);
+  iconCache.set(key, img);
+  return img;
+}
 
 const DEFAULT_PALETTES = [
   ["#1a1a2e", "#e94560", "#f0f0f0", "#999999"],
@@ -130,10 +144,10 @@ function wrapText(
 /**
  * Render a single quote card to an offscreen canvas.
  */
-export function renderCardToCanvas(
+export async function renderCardToCanvas(
   quote: QuoteData,
   index: number,
-): HTMLCanvasElement {
+): Promise<HTMLCanvasElement> {
   const canvas = document.createElement("canvas");
   canvas.width = CARD_WIDTH * 2; // 2x for retina
   canvas.height = CARD_HEIGHT * 2;
@@ -222,33 +236,34 @@ export function renderCardToCanvas(
   ctx.letterSpacing = "1.5px";
   ctx.fillText(quote.attribution.toUpperCase(), CARD_PADDING, attrY);
 
-  // Social handle
+  // Social handle — platform icon + @username
   if (quote.socialHandle) {
-    let displayHandle = quote.socialHandle;
-    try {
-      const url = new URL(quote.socialHandle);
-      const segments = url.pathname
-        .replace(/\/+$/, "")
-        .split("/")
-        .filter(Boolean);
-      if (segments.length) {
-        let username = segments[0];
-        if (
-          (username === "c" || username === "channel" || username === "in") &&
-          segments[1]
-        ) {
-          username = segments[1];
-        }
-        displayHandle = `@${username.replace(/^@/, "")}`;
+    const social = parseSocialHandle(quote.socialHandle);
+    const handleBaseline = attrY + 22;
+    const ICON_SIZE = 13; // logical pixels (doubled by the ctx.scale)
+    const ICON_GAP = 5;
+
+    let textX = CARD_PADDING;
+
+    if (social.platform !== "unknown") {
+      const iconImg = await getCachedIcon(social.platform, mutedColor);
+      if (iconImg) {
+        // Center icon vertically on the baseline
+        ctx.drawImage(
+          iconImg,
+          CARD_PADDING,
+          handleBaseline - ICON_SIZE,
+          ICON_SIZE,
+          ICON_SIZE,
+        );
+        textX = CARD_PADDING + ICON_SIZE + ICON_GAP;
       }
-    } catch {
-      if (!displayHandle.startsWith("@")) displayHandle = `@${displayHandle}`;
     }
 
     ctx.font = `400 12px "Inter", "Helvetica Neue", sans-serif`;
     ctx.fillStyle = mutedColor;
     ctx.letterSpacing = "0px";
-    ctx.fillText(displayHandle, CARD_PADDING, attrY + 22);
+    ctx.fillText(social.username, textX, handleBaseline);
   }
 
   return canvas;
@@ -267,8 +282,8 @@ export async function buildTextureAtlas(
   ] as string[];
   await Promise.all(fontNames.map((f) => ensureFontLoaded(f)));
 
-  // Render all cards
-  const cards = quotes.map((q, i) => renderCardToCanvas(q, i));
+  // Render all cards (async so icons can be loaded)
+  const cards = await Promise.all(quotes.map((q, i) => renderCardToCanvas(q, i)));
 
   // Calculate atlas dimensions — arrange in a grid
   const cols = Math.ceil(Math.sqrt(cards.length));

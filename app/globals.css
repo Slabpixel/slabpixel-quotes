@@ -81,7 +81,7 @@ body {
 }
 
 .quote-card:hover {
-  box-shadow: 0 0 60px rgba(233, 69, 96, 0.08);
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.12);
 }
 
 .quote-card__text {
