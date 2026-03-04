@@ -4,7 +4,7 @@ import { getSessionCookie } from "better-auth/cookies";
 const protectedPaths = ["/dashboard", "/admin"];
 const adminPaths = ["/admin"];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));

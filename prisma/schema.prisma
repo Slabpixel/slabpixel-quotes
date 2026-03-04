@@ -17,6 +17,7 @@ model User {
   email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?   @db.Text
+  profilePhoto  String?   @db.Text // custom uploaded profile photo (preferred over image)
   role          String    @default("user") // "user" | "admin"
   banned        Boolean   @default(false)
   banReason     String?   @db.Text
@@ -97,6 +98,9 @@ model Quote {
   fontSecondary String? // secondary / pairing font
   colorPalette  String? @db.Text // JSON string of color palette
   mood          String? // e.g. "melancholy", "bold", "serene"
+
+  // Card visuals
+  backgroundId String? // key referencing a preset background from lib/backgrounds.ts
 
   // Curation
   status    QuoteStatus @default(PENDING)

@@ -4,6 +4,7 @@ export interface QuoteData {
   attribution: string;
   socialHandle: string | null;
   authorPhoto: string | null;
+  backgroundId: string | null;
   fontPrimary: string | null;
   fontSecondary: string | null;
   colorPalette: string | null;
@@ -13,6 +14,9 @@ export interface QuoteData {
   submitter?: {
     id: string;
     name: string;
+    /** Custom uploaded photo — preferred over image (OAuth avatar) */
+    profilePhoto: string | null;
+    /** OAuth avatar (Google etc.) — fallback when profilePhoto is null */
     image: string | null;
   } | null;
 }

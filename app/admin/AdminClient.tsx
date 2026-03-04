@@ -124,7 +124,7 @@ export default function AdminClient({
       <header className="border-b border-border px-8 py-6 flex justify-between items-center">
         <div className="flex items-center gap-4">
           <Link
-            href="/"
+            href="/explore"
             className="text-xs uppercase tracking-widest text-muted hover:text-white transition-colors"
           >
             &larr; Grid

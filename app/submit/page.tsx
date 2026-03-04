@@ -145,7 +145,7 @@ export default function SubmitPage() {
           </p>
           <div className="flex gap-4 justify-center pt-4">
             <Link
-              href="/"
+              href="/explore"
               className="px-6 py-3 text-sm uppercase tracking-widest text-foreground border border-border rounded-lg hover:bg-foreground/5 transition-colors"
             >
               Back to Grid
@@ -169,7 +169,7 @@ export default function SubmitPage() {
       {/* Left: Form */}
       <div className="flex-1 flex flex-col justify-center px-8 py-12 md:px-16 lg:px-24 max-w-2xl">
         <Link
-          href="/"
+          href="/explore"
           className="text-xs uppercase tracking-widest text-muted mb-12 hover:text-foreground transition-colors inline-block"
         >
           &larr; Back

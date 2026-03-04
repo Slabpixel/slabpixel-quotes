@@ -2,6 +2,7 @@
 
 import { type QuoteData } from "@/types/quote";
 import { useGoogleFont } from "@/lib/use-google-font";
+import { cn } from "@/lib/cn";
 import SocialIcon from "./SocialIcon";
 
 // Default palettes for quotes without custom colors
@@ -71,7 +72,10 @@ export default function QuoteCard({ quote, index, onClick }: QuoteCardProps) {
       {/* Mood-driven visual overlay */}
       {quote.mood && (
         <div
-          className={`quote-card__mood-fx quote-card__mood-fx--${quote.mood}`}
+          className={cn(
+            "quote-card__mood-fx",
+            `quote-card__mood-fx--${quote.mood}`,
+          )}
           style={
             {
               "--accent": accentColor,

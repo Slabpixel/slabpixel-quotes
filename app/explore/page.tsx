@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/db";
-import HomeClient from "./HomeClient";
+import ExploreClient from "../ExploreClient";
 
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
+export default async function ExplorePage() {
   const quotes = await prisma.quote.findMany({
     where: { status: "PUBLISHED" },
     orderBy: { publishedAt: "desc" },
@@ -37,5 +37,5 @@ export default async function HomePage() {
     publishedAt: q.publishedAt?.toISOString() ?? null,
   }));
 
-  return <HomeClient quotes={serializedQuotes} />;
+  return <ExploreClient quotes={serializedQuotes} />;
 }
