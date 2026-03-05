@@ -138,7 +138,7 @@ function ShareButton({ quote }: { quote: QuoteData }) {
   return (
     <button
       onClick={handleShare}
-      className="inline-flex items-center gap-[0.4rem] font-sans text-[0.65rem] tracking-[0.07em] uppercase text-foreground bg-[#f0f0f0] border-0 rounded-full px-4 py-[0.45rem] cursor-pointer transition-colors hover:bg-[#e4e4e4]"
+      className="inline-flex items-center gap-2 font-sans text-sm text-foreground bg-[#f0f0f0] border-0 rounded-full px-4 py-[0.45rem] cursor-pointer transition-colors hover:bg-[#e4e4e4]"
     >
       <svg
         viewBox="0 0 24 24"
@@ -173,7 +173,7 @@ function SubmitCard({ total }: { total: number }) {
       <div className="relative flex flex-col items-start justify-start overflow-hidden">
           <Link
             href="/submit"
-            className="inline-flex items-center gap-[0.45rem] font-[inherit] text-[0.65rem] tracking-[0.08em] uppercase text-foreground bg-[#ECECEC] rounded-full py-2 px-[1.1rem] no-underline transition-opacity  w-fit hover:opacity-85"
+            className="inline-flex items-center gap-2 font-[inherit] text-sm text-foreground bg-[#ECECEC] rounded-full py-2 px-[1.1rem] no-underline transition-opacity  w-fit hover:opacity-85"
           >
             <svg
               viewBox="0 0 24 24"
