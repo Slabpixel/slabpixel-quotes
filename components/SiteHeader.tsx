@@ -8,9 +8,9 @@ import { cn } from "@/lib/cn";
 
 // Re-usable base class for every dropdown nav item (Link + button)
 const navLinkBase =
-  "text-base font-normal text-foreground no-underline py-[0.6rem] bg-transparent " +
-  "border-0 cursor-pointer text-left font-[inherit] tracking-normal transition-colors " +
-  "duration-150 leading-snug hover:text-accent";
+  "text-sm font-normal text-foreground no-underline bg-transparent" +
+  "cursor-pointer text-left font-[inherit] tracking-normal transition-colors " +
+  "duration-150 leading-none";
 
 // Custom hamburger icon (two unequal lines)
 function HamburgerIcon() {
@@ -77,7 +77,7 @@ export default function SiteHeader() {
   const close = () => setIsOpen(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-[200] p-8 flex justify-end items-center pointer-events-none">
+    <header className="fixed top-0 left-0 right-0 z-200 p-8 flex justify-end items-center pointer-events-none">
       <div className="relative pointer-events-auto" ref={menuRef}>
         {/* Hamburger toggle */}
         <button
@@ -92,115 +92,124 @@ export default function SiteHeader() {
         {/* Dropdown panel */}
         {isOpen && (
           <div
-            className="absolute top-[-1.5rem] right-[-1.5rem] bg-white rounded-[1.25rem] shadow-[0_2px_100px_rgba(0,0,0,0.10)] min-w-[280px] p-6 flex flex-col z-[300] animate-[dropdown-in_0.18s_ease]"
+            className="absolute -top-6 -right-6 bg-white rounded-[1.25rem] shadow-[0_2px_100px_rgba(0,0,0,0.10)] min-w-70 max-w-75 p-6 flex items-start gap-4 z-300"
             role="dialog"
             aria-modal="true"
           >
-            {/* User info row */}
-            <div className="relative flex items-center gap-3 pb-5 border-b border-border mb-1">
-              <div className="w-11 h-11 rounded-full bg-[#ddd] overflow-hidden flex items-center justify-center shrink-0">
-                {user?.image ? (
-                  <Image
-                    src={user.image}
-                    alt={user.name ?? "avatar"}
-                    width={44}
-                    height={44}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-[0.75rem] font-semibold text-muted">
-                    {initials}
-                  </span>
-                )}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <p className="text-[0.9rem] font-semibold text-foreground m-0 leading-[1.3]">
-                  {user?.name ?? "Guest"}
-                </p>
-                {user?.email && (
-                  <p className="text-[0.72rem] text-muted m-0 whitespace-nowrap overflow-hidden text-ellipsis">
-                    {user.email.length > 22
-                      ? user.email.slice(0, 22) + "…"
-                      : user.email}
-                  </p>
-                )}
-              </div>
-
-              {/* Close — same icon, top-right corner of panel */}
-              <button
-                className="bg-transparent border-0 cursor-pointer text-foreground flex items-center shrink-0 absolute top-0 right-0"
-                onClick={close}
-                aria-label="Close menu"
-              >
-                <HamburgerIcon />
-              </button>
-            </div>
-
-            {/* Nav links */}
-            <nav className="flex flex-col py-2">
-              <Link href="/submit" className={cn(navLinkBase)} onClick={close}>
-                Submit a Quotes
-              </Link>
-
-              {!isPending && user && (
-                <>
-                  {(user as { role?: string }).role === "admin" && (
-                    <Link
-                      href="/admin"
-                      className={cn(navLinkBase)}
-                      onClick={close}
-                    >
-                      Admin
-                    </Link>
+            <div className="flex flex-col gap-4 max-w-full overflow-hidden">
+              {/* User info row */}
+              <div className="relative flex items-center gap-2">
+                <div className="size-10 rounded-full bg-[#ddd] overflow-hidden flex items-center justify-center shrink-0">
+                  {user?.image ? (
+                    <Image
+                      src={user.image}
+                      alt={user.name ?? "avatar"}
+                      width={40}
+                      height={40}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-[0.75rem] font-semibold text-muted">
+                      {initials}
+                    </span>
                   )}
+                </div>
+
+                <div className="flex-1 min-w-0 flex-col gap-1.25 flex">
+                  <p className="font-medium text-foreground">
+                    {user?.name} Aldo
+                  </p>
+                  <p className="text-sm opacity-50 truncate line-clamp-1 overflow-hidden">
+                    {user?.email} aldo@mail.commmmmmmasdnaiwdniawndiawndi
+                  </p>
+                </div>
+              </div>
+
+              <div className="gap-25 flex flex-col">
+                {/* Nav links */}
+                <nav className="flex flex-col gap-4">
                   <Link
-                    href="/dashboard"
+                    href="/submit"
                     className={cn(navLinkBase)}
                     onClick={close}
                   >
-                    Dashboard
+                    Submit a Quotes
                   </Link>
-                  <button
-                    className={cn(navLinkBase, "block w-full")}
-                    onClick={() => {
-                      signOut();
-                      close();
-                    }}
+                  <Link
+                    href="/submit"
+                    className={cn(navLinkBase)}
+                    onClick={close}
                   >
-                    Log out
-                  </button>
-                </>
-              )}
+                    My Quotes
+                  </Link>
 
-              {!isPending && !user && (
-                <Link
-                  href="/sign-in"
-                  className={cn(navLinkBase)}
-                  onClick={close}
-                >
-                  Sign In
-                </Link>
-              )}
-            </nav>
+                  {!isPending && user && (
+                    <>
+                      {(user as { role?: string }).role === "admin" && (
+                        <Link
+                          href="/admin"
+                          className={cn(navLinkBase)}
+                          onClick={close}
+                        >
+                          Admin
+                        </Link>
+                      )}
+                      <Link
+                        href="/dashboard"
+                        className={cn(navLinkBase)}
+                        onClick={close}
+                      >
+                        Dashboard
+                      </Link>
+                      <button
+                        className={cn(navLinkBase, "block w-full")}
+                        onClick={() => {
+                          signOut();
+                          close();
+                        }}
+                      >
+                        Log out
+                      </button>
+                    </>
+                  )}
 
-            {/* Footer links */}
-            <div className="flex flex-col gap-[0.35rem] pt-5 border-t border-border mt-2">
-              <Link
-                href="/privacy"
-                className="text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:text-foreground"
-                onClick={close}
-              >
-                Privacy Policy
-              </Link>
-              <Link
-                href="/terms"
-                className="text-[0.8rem] text-muted no-underline transition-colors duration-150 hover:text-foreground"
-                onClick={close}
-              >
-                Terms &amp; Conditions
-              </Link>
+                  {!isPending && !user && (
+                    <Link
+                      href="/sign-in"
+                      className={cn(navLinkBase)}
+                      onClick={close}
+                    >
+                      Sign In
+                    </Link>
+                  )}
+                </nav>
+
+                {/* Footer links */}
+                <div className="flex flex-col gap-4">
+                  <Link
+                    href="/privacy"
+                    className={cn(navLinkBase)}
+                    onClick={close}
+                  >
+                    Privacy Policy
+                  </Link>
+                  <Link
+                    href="/terms"
+                    className={cn(navLinkBase)}
+                    onClick={close}
+                  >
+                    Terms &amp; Conditions
+                  </Link>
+                </div>
+              </div>
             </div>
+            <button
+              className="bg-transparent border-0 cursor-pointer text-foreground flex items-center shrink-0"
+              onClick={close}
+              aria-label="Close menu"
+            >
+              <HamburgerIcon />
+            </button>
           </div>
         )}
       </div>

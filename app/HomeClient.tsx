@@ -223,17 +223,17 @@ function FeedItem({
     <article className="grid grid-cols-[4rem_8rem_1fr_12rem] items-center min-h-[340px] gap-0 max-[860px]:grid-cols-[3rem_1fr] max-[860px]:grid-rows-[auto_auto] max-[860px]:min-h-0 max-[860px]:gap-y-3">
       {/* ── 1 · Index number ─────────────────────────── */}
       <div className="flex flex-col items-end pr-3 leading-[1.1] select-none max-[860px]:row-start-1 max-[860px]:col-start-1 max-[860px]:items-start max-[860px]:pr-0">
-        <span className="text-[0.55rem] tracking-[0.1em] uppercase text-muted">
+        <span className="text-sm">
           No.
         </span>
-        <span className="text-2xl font-light text-foreground tracking-[-0.02em]">
+        <span className="text-sm text-foreground">
           {no}
         </span>
       </div>
 
       {/* ── 2 · Timeline column ───────────────────────── */}
       <div className="relative h-full flex items-center justify-end pr-5 max-[860px]:hidden">
-        <div className="flex flex-col items-end text-[0.58rem] tracking-[0.07em] uppercase text-muted leading-[1.5] select-none bg-white p-4">
+        <div className="flex flex-col items-end text-sm leading-[1.5] select-none bg-white p-4">
           <span>{date.day}</span>
           <span>{date.year}</span>
         </div>
