@@ -14,6 +14,7 @@
     "postinstall": "prisma generate"
   },
   "dependencies": {
+    "@gsap/react": "^2.1.2",
     "@prisma/adapter-mariadb": "^7.4.1",
     "@prisma/client": "^7.4.1",
     "better-auth": "^1.4.19",

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/db";
-import ExploreClient from "../ExploreClient";
+import ExploreClient from "@/components/pages/ExploreClient";
 
 export const dynamic = "force-dynamic";
 

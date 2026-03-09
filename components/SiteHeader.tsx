@@ -46,11 +46,11 @@ export default function SiteHeader() {
   const user = session?.user;
   const initials = user?.name
     ? user.name
-        .split(" ")
-        .map((w: string) => w[0])
-        .join("")
-        .slice(0, 2)
-        .toUpperCase()
+      .split(" ")
+      .map((w: string) => w[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase()
     : "?";
 
   // Close on outside click
@@ -96,51 +96,65 @@ export default function SiteHeader() {
             role="dialog"
             aria-modal="true"
           >
-            <div className="flex flex-col gap-4 max-w-full overflow-hidden">
+            <div className="flex flex-col gap-4 w-full overflow-hidden">
               {/* User info row */}
-              <div className="relative flex items-center gap-2">
-                <div className="size-10 rounded-full bg-[#ddd] overflow-hidden flex items-center justify-center shrink-0">
-                  {user?.image ? (
-                    <Image
-                      src={user.image}
-                      alt={user.name ?? "avatar"}
-                      width={40}
-                      height={40}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <span className="text-[0.75rem] font-semibold text-muted">
-                      {initials}
-                    </span>
-                  )}
-                </div>
+              {user && (
+                <div className="relative flex items-center gap-2">
+                  <div className="size-10 rounded-full bg-[#ddd] overflow-hidden flex items-center justify-center shrink-0">
+                    {user?.image ? (
+                      <Image
+                        src={user.image}
+                        alt={user.name ?? "avatar"}
+                        width={40}
+                        height={40}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span className="text-[0.75rem] font-semibold text-muted">
+                        {initials}
+                      </span>
+                    )}
+                  </div>
 
-                <div className="flex-1 min-w-0 flex-col gap-1.25 flex">
-                  <p className="font-medium text-foreground">
-                    {user?.name} Aldo
-                  </p>
-                  <p className="text-sm opacity-50 truncate line-clamp-1 overflow-hidden">
-                    {user?.email} aldo@mail.commmmmmmasdnaiwdniawndiawndi
-                  </p>
+                  <div className="flex-1 min-w-0 flex-col gap-1.25 flex">
+                    <p className="font-medium text-foreground">
+                      {user?.name}
+                    </p>
+                    <p className="text-sm opacity-50 truncate line-clamp-1 overflow-hidden">
+                      {user?.email}
+                    </p>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div className="gap-25 flex flex-col">
                 {/* Nav links */}
                 <nav className="flex flex-col gap-4">
+
+                  {!user && (
+                    <>
+                      <Link
+                        href="/login"
+                        className={cn(navLinkBase)}
+                        onClick={close}
+                      >
+                        Login
+                      </Link>
+                      <Link
+                        href="/login"
+                        className={cn(navLinkBase)}
+                        onClick={close}
+                      >
+                        Create an Account
+                      </Link>
+                    </>
+                  )}
                   <Link
                     href="/submit"
                     className={cn(navLinkBase)}
                     onClick={close}
                   >
                     Submit a Quotes
-                  </Link>
-                  <Link
-                    href="/submit"
-                    className={cn(navLinkBase)}
-                    onClick={close}
-                  >
-                    My Quotes
                   </Link>
 
                   {!isPending && user && (
@@ -171,16 +185,6 @@ export default function SiteHeader() {
                         Log out
                       </button>
                     </>
-                  )}
-
-                  {!isPending && !user && (
-                    <Link
-                      href="/sign-in"
-                      className={cn(navLinkBase)}
-                      onClick={close}
-                    >
-                      Sign In
-                    </Link>
                   )}
                 </nav>
 

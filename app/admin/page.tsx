@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
-import AdminClient from "./AdminClient";
+import AdminClient from "@/components/pages/AdminClient";
 
 export default async function AdminPage() {
   const session = await auth.api.getSession({ headers: await headers() });

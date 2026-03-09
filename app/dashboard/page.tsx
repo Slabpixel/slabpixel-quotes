@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { headers } from "next/headers";
-import DashboardClient from "./DashboardClient";
+import DashboardClient from "@/components/pages/DashboardClient";
 
 export default async function DashboardPage() {
   const session = await auth.api.getSession({ headers: await headers() });
