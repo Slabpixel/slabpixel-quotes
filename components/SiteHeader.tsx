@@ -8,7 +8,7 @@ import { cn } from "@/lib/cn";
 
 // Re-usable base class for every dropdown nav item (Link + button)
 const navLinkBase =
-  "text-sm font-normal text-foreground no-underline bg-transparent" +
+  "text-sm font-medium text-foreground no-underline bg-transparent" +
   "cursor-pointer text-left font-[inherit] tracking-normal transition-colors " +
   "duration-150 leading-none";
 
@@ -44,6 +44,7 @@ export default function SiteHeader() {
   const menuRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user;
+  const admin = user?.role === "admin";
   const initials = user?.name
     ? user.name
       .split(" ")
@@ -168,13 +169,24 @@ export default function SiteHeader() {
                           Admin
                         </Link>
                       )}
-                      <Link
+                      {admin ? (
+                        <Link
                         href="/dashboard"
                         className={cn(navLinkBase)}
                         onClick={close}
                       >
                         Dashboard
                       </Link>
+                      ) :
+                      <Link
+                        href="/dashboard"
+                        className={cn(navLinkBase)}
+                        onClick={close}
+                      >
+                        Your Quotes
+                      </Link>
+                      }
+                      
                       <button
                         className={cn(navLinkBase, "block w-full")}
                         onClick={() => {

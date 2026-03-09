@@ -145,8 +145,8 @@ function ShareButton({ quote }: { quote: QuoteData }) {
       className="inline-flex items-center gap-2 font-medium font-sans text-sm text-foreground bg-[#F8F8F8] border-0 rounded-full px-4 py-3 leading-none cursor-pointer transition-colors hover:bg-[#e4e4e4]"
     >
       <svg width="15" height="15" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M10.7461 0.246094L14.4648 3.96484C14.7109 4.21094 14.7109 4.64844 14.4648 4.89453L10.7461 8.61328C10.5547 8.80469 10.2539 8.85938 10.0078 8.75C9.76172 8.64062 9.625 8.42188 9.625 8.14844V6.61719H8.33984C7.35547 6.61719 6.5625 7.41016 6.5625 8.39453C6.5625 8.72266 6.61719 8.96875 6.72656 9.13281C6.89062 9.40625 6.83594 9.73438 6.61719 9.95312C6.37109 10.1719 6.04297 10.1719 5.76953 10.0078C5.57812 9.84375 5.33203 9.67969 5.11328 9.43359C4.48438 8.80469 3.9375 7.90234 3.9375 6.61719C3.9375 4.21094 5.87891 2.24219 8.3125 2.24219H9.625V0.710938C9.625 0.4375 9.76172 0.21875 10.0078 0.109375C10.2539 0 10.5547 0.0546875 10.7461 0.246094ZM10.9375 2.89844C10.9375 3.25391 10.6367 3.55469 10.2812 3.55469H8.3125C6.61719 3.55469 5.25 4.92188 5.25 6.61719C5.25 6.94531 5.27734 7.21875 5.38672 7.49219C5.76953 6.23438 6.94531 5.30469 8.33984 5.30469H10.2812C10.6367 5.30469 10.9375 5.60547 10.9375 5.96094V6.5625L13.0703 4.42969L10.9375 2.29688V2.89844ZM2.1875 2.67969H2.84375C3.19922 2.67969 3.5 2.98047 3.5 3.33594C3.5 3.69141 3.19922 3.99219 2.84375 3.99219H2.1875C1.69531 3.99219 1.3125 4.375 1.3125 4.86719V11.8672C1.3125 12.3594 1.69531 12.7422 2.1875 12.7422H9.1875C9.65234 12.7422 10.0625 12.3594 10.0625 11.8672V11.2109C10.0625 10.8555 10.3359 10.5547 10.7188 10.5547C11.0742 10.5547 11.375 10.8555 11.375 11.2109V11.8672C11.375 13.0703 10.3906 14.0547 9.1875 14.0547H2.1875C0.957031 14.0547 0 13.0703 0 11.8672V4.86719C0 3.66406 0.957031 2.67969 2.1875 2.67969Z" fill="black"/>
-</svg>
+        <path d="M10.7461 0.246094L14.4648 3.96484C14.7109 4.21094 14.7109 4.64844 14.4648 4.89453L10.7461 8.61328C10.5547 8.80469 10.2539 8.85938 10.0078 8.75C9.76172 8.64062 9.625 8.42188 9.625 8.14844V6.61719H8.33984C7.35547 6.61719 6.5625 7.41016 6.5625 8.39453C6.5625 8.72266 6.61719 8.96875 6.72656 9.13281C6.89062 9.40625 6.83594 9.73438 6.61719 9.95312C6.37109 10.1719 6.04297 10.1719 5.76953 10.0078C5.57812 9.84375 5.33203 9.67969 5.11328 9.43359C4.48438 8.80469 3.9375 7.90234 3.9375 6.61719C3.9375 4.21094 5.87891 2.24219 8.3125 2.24219H9.625V0.710938C9.625 0.4375 9.76172 0.21875 10.0078 0.109375C10.2539 0 10.5547 0.0546875 10.7461 0.246094ZM10.9375 2.89844C10.9375 3.25391 10.6367 3.55469 10.2812 3.55469H8.3125C6.61719 3.55469 5.25 4.92188 5.25 6.61719C5.25 6.94531 5.27734 7.21875 5.38672 7.49219C5.76953 6.23438 6.94531 5.30469 8.33984 5.30469H10.2812C10.6367 5.30469 10.9375 5.60547 10.9375 5.96094V6.5625L13.0703 4.42969L10.9375 2.29688V2.89844ZM2.1875 2.67969H2.84375C3.19922 2.67969 3.5 2.98047 3.5 3.33594C3.5 3.69141 3.19922 3.99219 2.84375 3.99219H2.1875C1.69531 3.99219 1.3125 4.375 1.3125 4.86719V11.8672C1.3125 12.3594 1.69531 12.7422 2.1875 12.7422H9.1875C9.65234 12.7422 10.0625 12.3594 10.0625 11.8672V11.2109C10.0625 10.8555 10.3359 10.5547 10.7188 10.5547C11.0742 10.5547 11.375 10.8555 11.375 11.2109V11.8672C11.375 13.0703 10.3906 14.0547 9.1875 14.0547H2.1875C0.957031 14.0547 0 13.0703 0 11.8672V4.86719C0 3.66406 0.957031 2.67969 2.1875 2.67969Z" fill="black" />
+      </svg>
 
       {copied ? "Copied!" : "Share Quote"}
     </button>
@@ -156,12 +156,12 @@ function ShareButton({ quote }: { quote: QuoteData }) {
 // ── Submit CTA card — first child of the feed list ────────────────────────
 function SubmitCard({ total }: { total: number }) {
   return (
-    <div className="grid grid-cols-[4rem_8rem_1fr_4rem_6rem] gap-8 items-center max-[860px]:grid-cols-[1fr]">
+    <div className="grid grid-cols-[4rem_8rem_1fr_4rem_6rem] gap-8 items-center max-lg:grid-cols-[1fr]">
       {/* Col 1: empty */}
-      <div aria-hidden="true" />
+      <div aria-hidden="true" className="max-lg:hidden" />
 
       {/* Col 2: top dot */}
-      <div aria-hidden="true" />
+      <div aria-hidden="true" className="max-lg:hidden" />
 
       {/* Col 3: CTA card */}
       <div className="relative flex flex-col items-start justify-start overflow-hidden">
@@ -179,10 +179,10 @@ function SubmitCard({ total }: { total: number }) {
 
       {/* Col 4: empty */}
 
-      <div aria-hidden="true" />
+      <div aria-hidden="true" className="max-lg:hidden" />
 
       {/* Col 5: empty */}
-      <div aria-hidden="true" />
+      <div aria-hidden="true" className="max-lg:hidden" />
     </div>
   );
 }
@@ -207,9 +207,9 @@ function FeedItem({
   const bg = getBackground(quote.backgroundId);
 
   return (
-    <article className="grid grid-cols-[4rem_8rem_1fr_4rem_6rem] items-center min-h-110 gap-8 max-[860px]:grid-cols-[1fr] max-[860px]:grid-rows-[auto] max-[860px]:min-h-0 max-[860px]:gap-2">
+    <article className="grid grid-cols-[4rem_8rem_1fr_4rem_6rem] items-center min-h-110 gap-8 max-lg:grid-cols-[1fr] max-lg:grid-rows-[auto] max-lg:min-h-0 max-lg:gap-2">
       {/* ── 1 · Index number ─────────────────────────── */}
-      <div className="max-[860px]:hidden flex flex-col items-end leading-[1.1] select-none max-[860px]:row-start-1 max-[860px]:col-start-1 max-[860px]:items-start max-[860px]:pr-0">
+      <div className="max-lg:hidden flex flex-col items-end leading-[1.1] select-none max-lg:row-start-1 max-lg:col-start-1 max-lg:items-start max-lg:pr-0">
         <span className="text-sm">
           No.
         </span>
@@ -219,7 +219,7 @@ function FeedItem({
       </div>
 
       {/* ── 2 · Timeline column ───────────────────────── */}
-      <div className="relative h-full flex items-center justify-end max-[860px]:hidden">
+      <div className="relative h-full flex items-center justify-end max-lg:hidden">
         <div className="flex flex-col items-end text-sm py-4 leading-normal select-none bg-white">
           <span>{date.day}</span>
           <span>{date.year}</span>
@@ -233,7 +233,7 @@ function FeedItem({
       <div
         className={cn(
           "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8",
-          "max-[860px]:row-start-1 max-[860px]:min-h-0 max-[860px]:px-8 max-[860px]:py-18",
+          "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-18",
           bg ? "" : "bg-[#ebebeb]",
         )}
         style={
@@ -252,27 +252,29 @@ function FeedItem({
         )}
 
         <div
-          className="relative z-1 bg-white rounded-4xl p-4 max-w-95 w-full flex flex-col gap-[0.6rem] shadow-[0_2px_20px_rgba(0,0,0,0.07)]"
+          className="relative z-1 bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
           style={{
             fontFamily: quote.fontPrimary
               ? `"${quote.fontPrimary}", serif`
               : undefined,
           }}
         >
-          <blockquote className="text-[1.2rem] font-medium leading-normal text-foreground m-0">
-            {quote.text}
-          </blockquote>
-          <cite className="text-[0.78rem] text-muted not-italic block">
-            {quote.attribution}
-          </cite>
-          <div className="flex justify-end mt-2">
+          <div className="flex flex-col gap-4 w-full">
+            <blockquote className="text-lg font-medium leading-1.4 text-foreground m-0">
+              {quote.text}
+            </blockquote>
+            <cite className="text-sm text-foreground/50 not-italic block">
+              {quote.attribution}
+            </cite>
+          </div>
+          <div className="flex justify-end ">
             <ShareButton quote={quote} />
           </div>
         </div>
       </div>
 
       {/* ── 4 · Right meta ──────────────────────────── */}
-      <div className="max-[860px]:hidden flex items-center max-[860px]:row-start-2 max-[860px]:col-start-2 max-[860px]:pl-0">
+      <div className="max-lg:hidden flex items-center max-lg:row-start-2 max-lg:col-start-2 max-lg:pl-0">
         {today && (
           <div className="flex flex-row items-center gap-[0.85rem] flex-nowrap">
             <p className="text-[0.55rem] tracking-widest uppercase text-muted leading-[1.6] m-0 shrink-0">
@@ -285,7 +287,7 @@ function FeedItem({
       </div>
 
       {/* ── 5 · Submitter info ──────────────────────────── */}
-      <div className="max-[860px]:hidden flex items-center gap-2 shrink-0">
+      <div className="max-lg:hidden flex items-center gap-2 shrink-0">
         <Avatar src={avatarSrc} name={submitterName} />
         <div className="flex flex-col leading-none text-sm">
           <span>
@@ -357,11 +359,11 @@ export default function HomeClient({ quotes }: HomeClientProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-7xl mx-auto px-10 py-24 pt-[25vh] max-[860px]:px-2 max-[860px]:pt-20 max-[860px]:pb-16">
+      <div className="max-w-7xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
         <div className="relative">
           {/* Animated vertical timeline line — GSAP scrubs height */}
           <div
-            className="absolute left-51.5 top-0 bottom-0 w-px bg-border -translate-x-1/2 pointer-events-none max-[860px]:hidden"
+            className="absolute left-51.5 top-0 bottom-0 w-px bg-border -translate-x-1/2 pointer-events-none max-lg:hidden"
             aria-hidden="true"
           >
             <div
