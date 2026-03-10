@@ -108,9 +108,9 @@ export default function QuoteCard({ quote, index, onClick }: QuoteCardProps) {
         >
           {quote.attribution}
         </span>
-        {quote.socialHandle && (
+        {quote.socialHandles?.length > 0 && (
           <SocialIcon
-            handle={quote.socialHandle}
+            handle={quote.socialHandles[0]}
             size={12}
             color={textColor}
             className="quote-card__handle"

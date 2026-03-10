@@ -160,15 +160,6 @@ export default function SiteHeader() {
 
                   {!isPending && user && (
                     <>
-                      {(user as { role?: string }).role === "admin" && (
-                        <Link
-                          href="/admin"
-                          className={cn(navLinkBase)}
-                          onClick={close}
-                        >
-                          Admin
-                        </Link>
-                      )}
                       {admin ? (
                         <Link
                         href="/dashboard"
@@ -179,7 +170,7 @@ export default function SiteHeader() {
                       </Link>
                       ) :
                       <Link
-                        href="/dashboard"
+                        href="/your-quotes"
                         className={cn(navLinkBase)}
                         onClick={close}
                       >

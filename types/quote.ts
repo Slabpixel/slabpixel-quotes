@@ -2,7 +2,7 @@ export interface QuoteData {
   id: string;
   text: string;
   attribution: string;
-  socialHandle: string | null;
+  socialHandles: string[];
   authorPhoto: string | null;
   backgroundId: string | null;
   fontPrimary: string | null;

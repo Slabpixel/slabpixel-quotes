@@ -90,7 +90,7 @@ model Quote {
   // Content
   text         String  @db.Text
   attribution  String  // name or alias
-  socialHandle String? // e.g. @username (X / Instagram)
+  socialHandles Json?  @default("[]") // JSON array of social URLs / handles
   authorPhoto  String? @db.Text // optional profile photo URL
 
   // Design choices (submitter-selected)

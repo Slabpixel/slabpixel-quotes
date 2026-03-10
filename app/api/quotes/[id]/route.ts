@@ -14,7 +14,7 @@ export async function GET(
       id: true,
       text: true,
       attribution: true,
-      socialHandle: true,
+      socialHandles: true,
       authorPhoto: true,
       fontPrimary: true,
       fontSecondary: true,

@@ -11,36 +11,44 @@ export default async function DashboardPage() {
     redirect("/sign-in?callbackUrl=/dashboard");
   }
 
-  const quotes = await prisma.quote.findMany({
-    where: { submitterId: session.user.id },
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      text: true,
-      attribution: true,
-      socialHandle: true,
-      status: true,
-      mood: true,
-      colorPalette: true,
-      createdAt: true,
-      publishedAt: true,
-    },
-  });
+  if (session.user.role !== "admin") {
+    redirect("/");
+  }
+
+  const [quotes, stats] = await Promise.all([
+    prisma.quote.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        submitter: {
+          select: { id: true, name: true, email: true, image: true },
+        },
+        curator: {
+          select: { id: true, name: true },
+        },
+      },
+    }),
+    Promise.all([
+      prisma.quote.count(),
+      prisma.quote.count({ where: { status: "PENDING" } }),
+      prisma.quote.count({ where: { status: "IN_REVIEW" } }),
+      prisma.quote.count({ where: { status: "PUBLISHED" } }),
+      prisma.quote.count({ where: { status: "REJECTED" } }),
+    ]).then(([total, pending, inReview, published, rejected]) => ({
+      total,
+      pending,
+      inReview,
+      published,
+      rejected,
+    })),
+  ]);
 
   const serializedQuotes = quotes.map((q) => ({
     ...q,
     createdAt: q.createdAt.toISOString(),
+    updatedAt: q.updatedAt.toISOString(),
     publishedAt: q.publishedAt?.toISOString() ?? null,
+    socialHandles: Array.isArray(q.socialHandles) ? (q.socialHandles as string[]) : [],
   }));
 
-  return (
-    <DashboardClient
-      user={{
-        name: session.user.name,
-        email: session.user.email,
-        image: session.user.image ?? null,
-      }}
-      quotes={serializedQuotes}
-    />
-  );
+  return <DashboardClient quotes={serializedQuotes} stats={stats} />;
 }

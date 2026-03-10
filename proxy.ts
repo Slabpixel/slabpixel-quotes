@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSessionCookie } from "better-auth/cookies";
 
-const protectedPaths = ["/dashboard", "/admin"];
-const adminPaths = ["/admin"];
+const protectedPaths = ["/your-quotes", "/dashboard"];
+const adminPaths = ["/dashboard"];
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -28,5 +28,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*"],
+  matcher: ["/your-quotes/:path*", "/dashboard/:path*"],
 };

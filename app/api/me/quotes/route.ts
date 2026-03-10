@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
         id: true,
         text: true,
         attribution: true,
-        socialHandle: true,
+        socialHandles: true,
         authorPhoto: true,
         fontPrimary: true,
         fontSecondary: true,

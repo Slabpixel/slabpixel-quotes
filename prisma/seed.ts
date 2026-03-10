@@ -18,7 +18,7 @@ async function main() {
     {
       text: "Design is not just what it looks like and feels like. Design is how it works.",
       attribution: "Steve Jobs",
-      socialHandle: "https://x.com/Apple",
+      socialHandles: ["https://x.com/Apple"],
       fontPrimary: "Playfair Display",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -34,7 +34,7 @@ async function main() {
     {
       text: "Have no fear of perfection — you'll never reach it.",
       attribution: "Salvador Dalí",
-      socialHandle: "https://instagram.com/thedali",
+      socialHandles: ["https://instagram.com/thedali"],
       fontPrimary: "Cormorant Garamond",
       fontSecondary: "DM Sans",
       colorPalette: JSON.stringify([
@@ -50,7 +50,7 @@ async function main() {
     {
       text: "Move fast and break things. Unless you are breaking stuff, you are not moving fast enough.",
       attribution: "Mark Zuckerberg",
-      socialHandle: "https://threads.net/@zuck",
+      socialHandles: ["https://threads.net/@zuck"],
       fontPrimary: "Space Grotesk",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -66,7 +66,7 @@ async function main() {
     {
       text: "The people who are crazy enough to think they can change the world are the ones who do.",
       attribution: "Rob Siltanen",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Syne",
       fontSecondary: "Nunito Sans",
       colorPalette: JSON.stringify([
@@ -84,7 +84,7 @@ async function main() {
     {
       text: "Typography is the craft of endowing human language with a durable visual form.",
       attribution: "Robert Bringhurst",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Libre Baskerville",
       fontSecondary: "Source Sans Pro",
       colorPalette: JSON.stringify([
@@ -100,7 +100,7 @@ async function main() {
     {
       text: "White space is to be regarded as an active element, not a passive background.",
       attribution: "Jan Tschichold",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Cormorant Garamond",
       fontSecondary: "Source Sans Pro",
       colorPalette: JSON.stringify([
@@ -116,7 +116,7 @@ async function main() {
     {
       text: "Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away.",
       attribution: "Antoine de Saint-Exupéry",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "EB Garamond",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -132,7 +132,7 @@ async function main() {
     {
       text: "Every great design begins with an even better story.",
       attribution: "Lorinda Mamo",
-      socialHandle: "https://instagram.com/lorindamamo",
+      socialHandles: ["https://instagram.com/lorindamamo"],
       fontPrimary: "Lora",
       fontSecondary: "Nunito Sans",
       colorPalette: JSON.stringify([
@@ -150,7 +150,7 @@ async function main() {
     {
       text: "The details are not the details. They make the design.",
       attribution: "Charles Eames",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "DM Sans",
       fontSecondary: "DM Sans",
       colorPalette: JSON.stringify([
@@ -166,7 +166,7 @@ async function main() {
     {
       text: "Good design is as little design as possible.",
       attribution: "Dieter Rams",
-      socialHandle: "https://youtube.com/@objectified",
+      socialHandles: ["https://youtube.com/@objectified"],
       fontPrimary: "Inter",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -182,7 +182,7 @@ async function main() {
     {
       text: "Less, but better.",
       attribution: "Dieter Rams",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Space Grotesk",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -198,7 +198,7 @@ async function main() {
     {
       text: "Styles come and go. Good design is a language, not a style.",
       attribution: "Massimo Vignelli",
-      socialHandle: "https://tiktok.com/@vignellidesign",
+      socialHandles: ["https://tiktok.com/@vignellidesign"],
       fontPrimary: "Outfit",
       fontSecondary: "DM Sans",
       colorPalette: JSON.stringify([
@@ -216,7 +216,7 @@ async function main() {
     {
       text: "Color is a power which directly influences the soul.",
       attribution: "Wassily Kandinsky",
-      socialHandle: "https://instagram.com/kandinsky_art",
+      socialHandles: ["https://instagram.com/kandinsky_art"],
       fontPrimary: "Syne",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -232,7 +232,7 @@ async function main() {
     {
       text: "Creativity is intelligence having fun.",
       attribution: "Albert Einstein",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Playfair Display",
       fontSecondary: "Nunito Sans",
       colorPalette: JSON.stringify([
@@ -248,7 +248,7 @@ async function main() {
     {
       text: "Art is not what you see, but what you make others see.",
       attribution: "Edgar Degas",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Cormorant Garamond",
       fontSecondary: "DM Sans",
       colorPalette: JSON.stringify([
@@ -266,7 +266,7 @@ async function main() {
     {
       text: "If you're not prepared to be wrong, you'll never come up with anything original.",
       attribution: "Ken Robinson",
-      socialHandle: "https://x.com/SirKenRobinson",
+      socialHandles: ["https://x.com/SirKenRobinson"],
       fontPrimary: "Space Grotesk",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -282,7 +282,7 @@ async function main() {
     {
       text: "Great things are done by a series of small things brought together.",
       attribution: "Vincent Van Gogh",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "EB Garamond",
       fontSecondary: "Nunito Sans",
       colorPalette: JSON.stringify([
@@ -300,7 +300,7 @@ async function main() {
     {
       text: "The world always seems brighter when you've just made something that wasn't there before.",
       attribution: "Neil Gaiman",
-      socialHandle: "https://bsky.app/profile/neilhimself.bsky.social",
+      socialHandles: ["https://bsky.app/profile/neilhimself.bsky.social"],
       fontPrimary: "Lora",
       fontSecondary: "Source Sans Pro",
       colorPalette: JSON.stringify([
@@ -316,7 +316,7 @@ async function main() {
     {
       text: "And, when you want something, all the universe conspires in helping you to achieve it.",
       attribution: "Paulo Coelho",
-      socialHandle: "https://x.com/paulocoelho",
+      socialHandles: ["https://x.com/paulocoelho"],
       fontPrimary: "Cormorant Garamond",
       fontSecondary: "DM Sans",
       colorPalette: JSON.stringify([
@@ -334,7 +334,7 @@ async function main() {
     {
       text: "We are all in the gutter, but some of us are looking at the stars.",
       attribution: "Oscar Wilde",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Libre Baskerville",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -350,7 +350,7 @@ async function main() {
     {
       text: "The wound is the place where the Light enters you.",
       attribution: "Rumi",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "EB Garamond",
       fontSecondary: "Source Sans Pro",
       colorPalette: JSON.stringify([
@@ -368,7 +368,7 @@ async function main() {
     {
       text: "Stay hungry. Stay foolish.",
       attribution: "Stewart Brand",
-      socialHandle: "https://x.com/stewartbrand",
+      socialHandles: ["https://x.com/stewartbrand"],
       fontPrimary: "Space Grotesk",
       fontSecondary: "DM Sans",
       colorPalette: JSON.stringify([
@@ -384,7 +384,7 @@ async function main() {
     {
       text: "Done is better than perfect.",
       attribution: "Sheryl Sandberg",
-      socialHandle: "https://linkedin.com/in/sherylsandberg",
+      socialHandles: ["https://linkedin.com/in/sherylsandberg"],
       fontPrimary: "Outfit",
       fontSecondary: "Inter",
       colorPalette: JSON.stringify([
@@ -400,7 +400,7 @@ async function main() {
     {
       text: "Make it simple, but significant.",
       attribution: "Don Draper",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Syne",
       fontSecondary: "Nunito Sans",
       colorPalette: JSON.stringify([
@@ -418,7 +418,7 @@ async function main() {
     {
       text: "Imagination is the beginning of creation. You imagine what you desire, you will what you imagine.",
       attribution: "George Bernard Shaw",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Playfair Display",
       fontSecondary: "Source Sans Pro",
       colorPalette: JSON.stringify([
@@ -436,7 +436,7 @@ async function main() {
     {
       text: "Simplicity is the ultimate sophistication.",
       attribution: "Leonardo da Vinci",
-      socialHandle: null,
+      socialHandles: [],
       fontPrimary: "Libre Baskerville",
       fontSecondary: "Nunito Sans",
       colorPalette: JSON.stringify([

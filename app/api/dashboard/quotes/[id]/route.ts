@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { updateQuoteStatusSchema } from "@/lib/validations/quote";
 import { headers } from "next/headers";
 
-// GET /api/admin/quotes/[id] — get full quote details for admin
+// GET /api/dashboard/quotes/[id] — get full quote details for admin
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -44,7 +44,7 @@ export async function GET(
   return NextResponse.json({ quote });
 }
 
-// PATCH /api/admin/quotes/[id] — update quote status / curate
+// PATCH /api/dashboard/quotes/[id] — update quote status / curate
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -91,7 +91,7 @@ export async function PATCH(
   return NextResponse.json({ quote });
 }
 
-// DELETE /api/admin/quotes/[id] — delete a quote
+// DELETE /api/dashboard/quotes/[id] — delete a quote
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },

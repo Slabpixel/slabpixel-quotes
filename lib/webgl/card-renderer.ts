@@ -232,7 +232,8 @@ export async function renderCardToCanvas(
   // Footer pinned to bottom (like flex space-between)
   const footerBottomMargin = CARD_PADDING;
   const handleY = CARD_HEIGHT - footerBottomMargin;
-  const attrY = quote.socialHandle ? handleY - 22 : handleY;
+  const firstHandle = quote.socialHandles?.[0];
+  const attrY = firstHandle ? handleY - 22 : handleY;
 
   // Attribution
   ctx.font = `600 13px "Inter", "Helvetica Neue", sans-serif`;
@@ -241,8 +242,8 @@ export async function renderCardToCanvas(
   ctx.fillText(quote.attribution.toUpperCase(), CARD_PADDING, attrY);
 
   // Social handle — platform icon + @username
-  if (quote.socialHandle) {
-    const social = parseSocialHandle(quote.socialHandle);
+  if (firstHandle) {
+    const social = parseSocialHandle(firstHandle);
     const handleBaseline = attrY + 22;
     const ICON_SIZE = 13; // logical pixels (doubled by the ctx.scale)
     const ICON_GAP = 5;

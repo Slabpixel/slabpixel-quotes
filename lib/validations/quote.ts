@@ -9,16 +9,17 @@ export const submitQuoteSchema = z.object({
     .string()
     .min(1, "Attribution is required")
     .max(100, "Attribution must be 100 characters or less"),
-  socialHandle: z
-    .string()
-    .max(100, "Social handle must be 100 characters or less")
+  socialHandles: z
+    .array(z.string().max(200, "Each social handle must be 200 characters or less"))
+    .max(5, "You can add up to 5 social handles")
     .optional()
-    .nullable(),
+    .default([]),
   authorPhoto: z.string().url().optional().nullable(),
   fontPrimary: z.string().max(100).optional().nullable(),
   fontSecondary: z.string().max(100).optional().nullable(),
   colorPalette: z.string().max(500).optional().nullable(),
   mood: z.string().max(50).optional().nullable(),
+  backgroundId: z.string().max(100).optional().nullable(),
 });
 
 export const updateQuoteStatusSchema = z.object({

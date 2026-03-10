@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-// GET /api/admin/quotes — list all quotes for admin review
+// GET /api/dashboard/quotes — list all quotes for admin review
 export async function GET(request: NextRequest) {
   const session = await auth.api.getSession({ headers: await headers() });
 

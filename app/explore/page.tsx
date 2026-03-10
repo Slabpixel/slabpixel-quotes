@@ -12,7 +12,7 @@ export default async function ExplorePage() {
       id: true,
       text: true,
       attribution: true,
-      socialHandle: true,
+      socialHandles: true,
       authorPhoto: true,
       backgroundId: true,
       fontPrimary: true,
@@ -34,6 +34,7 @@ export default async function ExplorePage() {
 
   const serializedQuotes = quotes.map((q) => ({
     ...q,
+    socialHandles: Array.isArray(q.socialHandles) ? (q.socialHandles as string[]) : [],
     publishedAt: q.publishedAt?.toISOString() ?? null,
   }));
 

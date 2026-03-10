@@ -174,14 +174,15 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
             >
               {quote?.attribution}
             </span>
-            {quote?.socialHandle && (
+            {quote?.socialHandles?.map((handle, i) => (
               <SocialIcon
-                handle={quote.socialHandle}
+                key={i}
+                handle={handle}
                 size={16}
                 color={textColor}
                 className="detail-overlay__handle"
               />
-            )}
+            ))}
             {quote?.mood && (
               <span
                 className="detail-overlay__mood-tag"

@@ -3,7 +3,7 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
-// GET /api/admin/stats — dashboard statistics
+// GET /api/dashboard/stats — dashboard statistics
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
 

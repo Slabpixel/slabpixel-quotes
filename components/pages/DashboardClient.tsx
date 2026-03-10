@@ -1,187 +1,349 @@
 "use client";
 
-import Link from "next/link";
-import { signOut } from "@/lib/auth-client";
+import { useState } from "react";
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: "#facc15",
-  IN_REVIEW: "#60a5fa",
-  APPROVED: "#34d399",
-  PUBLISHED: "#a78bfa",
-  REJECTED: "#f87171",
+  PENDING: "#d97706",
+  IN_REVIEW: "#2563eb",
+  APPROVED: "#059669",
+  PUBLISHED: "#7c3aed",
+  REJECTED: "#dc2626",
 };
+
+const STATUS_OPTIONS = [
+  "PENDING",
+  "IN_REVIEW",
+  "APPROVED",
+  "PUBLISHED",
+  "REJECTED",
+] as const;
 
 interface DashboardQuote {
   id: string;
   text: string;
   attribution: string;
-  socialHandle: string | null;
-  status: string;
-  mood: string | null;
+  socialHandles: string[];
+  authorPhoto: string | null;
+  fontPrimary: string | null;
+  fontSecondary: string | null;
   colorPalette: string | null;
+  mood: string | null;
+  status: string;
+  designNotes: string | null;
+  cardImageUrl: string | null;
+  curatorId: string | null;
+  submitterId: string | null;
   createdAt: string;
+  updatedAt: string;
   publishedAt: string | null;
-}
-
-interface DashboardClientProps {
-  user: {
+  submitter: {
+    id: string;
     name: string;
     email: string;
     image: string | null;
-  };
+  } | null;
+  curator: {
+    id: string;
+    name: string;
+  } | null;
+}
+
+interface DashboardStats {
+  total: number;
+  pending: number;
+  inReview: number;
+  published: number;
+  rejected: number;
+}
+
+interface DashboardClientProps {
   quotes: DashboardQuote[];
+  stats: DashboardStats;
 }
 
 export default function DashboardClient({
-  user,
-  quotes,
+  quotes: initialQuotes,
+  stats,
 }: DashboardClientProps) {
+  const [quotes, setQuotes] = useState(initialQuotes);
+  const [filter, setFilter] = useState<string | null>(null);
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const filteredQuotes = filter
+    ? quotes.filter((q) => q.status === filter)
+    : quotes;
+
+  const updateStatus = async (quoteId: string, status: string) => {
+    setUpdatingId(quoteId);
+    try {
+      const res = await fetch(`/api/dashboard/quotes/${quoteId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status }),
+      });
+
+      if (res.ok) {
+        const { quote } = await res.json();
+        setQuotes((prev) =>
+          prev.map((q) =>
+            q.id === quoteId
+              ? { ...q, status: quote.status, publishedAt: quote.publishedAt }
+              : q,
+          ),
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update:", err);
+    } finally {
+      setUpdatingId(null);
+    }
+  };
+
+  const deleteQuote = async (quoteId: string) => {
+    if (!confirm("Delete this quote permanently?")) return;
+
+    try {
+      const res = await fetch(`/api/dashboard/quotes/${quoteId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        setQuotes((prev) => prev.filter((q) => q.id !== quoteId));
+      }
+    } catch (err) {
+      console.error("Failed to delete:", err);
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-background text-white">
-      {/* Header */}
-      <header className="border-b border-border px-8 py-6 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Link
-            href="/explore"
-            className="text-xs uppercase tracking-widest text-muted hover:text-white transition-colors"
-          >
-            &larr; Grid
-          </Link>
-          <span className="text-border">/</span>
-          <h1 className="text-sm font-medium uppercase tracking-widest">
-            Dashboard
-          </h1>
-        </div>
-        <div className="flex items-center gap-4">
-          <div className="text-right">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-xs text-muted">{user.email}</p>
-          </div>
-          {user.image && (
-            <img
-              src={user.image}
-              alt={user.name}
-              className="w-8 h-8 rounded-full"
-            />
-          )}
-          <button
-            onClick={() => signOut()}
-            className="text-xs uppercase tracking-widest text-muted hover:text-white transition-colors cursor-pointer"
-          >
-            Sign Out
-          </button>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-foreground">
+      <div className="max-w-7xl mx-auto px-10 py-24 pt-32 max-lg:px-4 max-lg:pt-24 max-lg:pb-16">
+        <h1 className="text-3xl font-light tracking-tight mb-2">Dashboard</h1>
+        <p className="text-sm text-foreground/50 mb-10">
+          Manage and curate submitted quotes.
+        </p>
 
-      <div className="max-w-5xl mx-auto px-8 py-12">
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
-          <div className="border border-border rounded-lg p-4">
-            <p className="text-2xl font-light">{quotes.length}</p>
-            <p className="text-xs uppercase tracking-widest text-muted mt-1">
-              Total
-            </p>
-          </div>
-          <div className="border border-border rounded-lg p-4">
-            <p
-              className="text-2xl font-light"
-              style={{ color: STATUS_COLORS.PENDING }}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
+          {[
+            { label: "Total", value: stats.total, color: "#111" },
+            {
+              label: "Pending",
+              value: stats.pending,
+              color: STATUS_COLORS.PENDING,
+            },
+            {
+              label: "In Review",
+              value: stats.inReview,
+              color: STATUS_COLORS.IN_REVIEW,
+            },
+            {
+              label: "Published",
+              value: stats.published,
+              color: STATUS_COLORS.PUBLISHED,
+            },
+            {
+              label: "Rejected",
+              value: stats.rejected,
+              color: STATUS_COLORS.REJECTED,
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-[#F8F8F8] rounded-2xl p-5"
             >
-              {quotes.filter((q) => q.status === "PENDING").length}
-            </p>
-            <p className="text-xs uppercase tracking-widest text-muted mt-1">
-              Pending
-            </p>
-          </div>
-          <div className="border border-border rounded-lg p-4">
-            <p
-              className="text-2xl font-light"
-              style={{ color: STATUS_COLORS.PUBLISHED }}
-            >
-              {quotes.filter((q) => q.status === "PUBLISHED").length}
-            </p>
-            <p className="text-xs uppercase tracking-widest text-muted mt-1">
-              Published
-            </p>
-          </div>
-          <div className="border border-border rounded-lg p-4">
-            <p
-              className="text-2xl font-light"
-              style={{ color: STATUS_COLORS.REJECTED }}
-            >
-              {quotes.filter((q) => q.status === "REJECTED").length}
-            </p>
-            <p className="text-xs uppercase tracking-widest text-muted mt-1">
-              Rejected
-            </p>
-          </div>
+              <p className="text-2xl font-light" style={{ color: stat.color }}>
+                {stat.value}
+              </p>
+              <p className="text-xs uppercase tracking-widest text-foreground/40 mt-1">
+                {stat.label}
+              </p>
+            </div>
+          ))}
         </div>
 
-        {/* Action */}
-        <div className="flex justify-between items-center mb-8">
-          <h2 className="text-lg font-light">Your Submissions</h2>
-          <Link
-            href="/submit"
-            className="px-5 py-2.5 text-xs uppercase tracking-widest bg-white text-background rounded-lg hover:bg-white/90 transition-colors"
+        {/* Filters */}
+        <div className="flex gap-2 mb-8 flex-wrap">
+          <button
+            onClick={() => setFilter(null)}
+            className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
+              filter === null
+                ? "border-foreground bg-foreground text-background"
+                : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
+            }`}
           >
-            Submit New
-          </Link>
+            All ({quotes.length})
+          </button>
+          {STATUS_OPTIONS.map((s) => {
+            const count = quotes.filter((q) => q.status === s).length;
+            return (
+              <button
+                key={s}
+                onClick={() => setFilter(filter === s ? null : s)}
+                className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
+                  filter === s
+                    ? "border-current"
+                    : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
+                }`}
+                style={
+                  filter === s
+                    ? { color: STATUS_COLORS[s], borderColor: STATUS_COLORS[s] }
+                    : {}
+                }
+              >
+                {s.replace("_", " ")} ({count})
+              </button>
+            );
+          })}
         </div>
 
-        {/* Quotes list */}
-        {quotes.length === 0 ? (
-          <div className="text-center py-20">
-            <p className="text-muted mb-4">No quotes submitted yet.</p>
-            <Link
-              href="/submit"
-              className="text-accent text-sm hover:underline"
+        {/* Quotes */}
+        <div className="space-y-2">
+          {filteredQuotes.map((quote) => (
+            <div
+              key={quote.id}
+              className="bg-[#F8F8F8] rounded-2xl overflow-hidden hover:bg-[#f0f0f0] transition-colors"
             >
-              Submit your first quote &rarr;
-            </Link>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {quotes.map((quote) => (
+              {/* Summary row */}
               <div
-                key={quote.id}
-                className="border border-border rounded-lg p-5 flex gap-6 items-start hover:border-white/10 transition-colors"
+                className="flex items-center gap-4 px-5 py-4 cursor-pointer"
+                onClick={() =>
+                  setExpandedId(expandedId === quote.id ? null : quote.id)
+                }
               >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-light leading-relaxed truncate">
-                    &ldquo;{quote.text}&rdquo;
-                  </p>
-                  <div className="flex items-center gap-3 mt-2">
-                    <span className="text-xs text-muted">
-                      — {quote.attribution}
-                    </span>
-                    {quote.socialHandle && (
-                      <span className="text-xs text-muted opacity-50">
-                        {quote.socialHandle}
+                <span
+                  className="w-2 h-2 rounded-full shrink-0"
+                  style={{
+                    backgroundColor: STATUS_COLORS[quote.status] || "#999",
+                  }}
+                />
+
+                <p className="flex-1 text-sm font-light truncate min-w-0">
+                  &ldquo;{quote.text}&rdquo;
+                </p>
+
+                <span className="text-xs text-foreground/40 shrink-0">
+                  — {quote.attribution}
+                </span>
+
+                <span
+                  className="text-[0.6rem] uppercase tracking-widest font-medium px-2 py-0.5 rounded-full shrink-0"
+                  style={{
+                    color: STATUS_COLORS[quote.status],
+                    backgroundColor: `${STATUS_COLORS[quote.status]}12`,
+                  }}
+                >
+                  {quote.status.replace("_", " ")}
+                </span>
+
+                <span className="text-[0.6rem] text-foreground/30 shrink-0">
+                  {new Date(quote.createdAt).toLocaleDateString()}
+                </span>
+
+                <span className="text-foreground/30 text-xs">
+                  {expandedId === quote.id ? "▲" : "▼"}
+                </span>
+              </div>
+
+              {/* Expanded detail */}
+              {expandedId === quote.id && (
+                <div className="border-t border-foreground/5 px-5 py-5 space-y-4 bg-[#ebebeb]">
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+                    <div>
+                      <span className="text-foreground/40 uppercase tracking-wider block mb-1">
+                        Attribution
                       </span>
+                      <span>{quote.attribution}</span>
+                    </div>
+                    {quote.socialHandles?.length > 0 && (
+                      <div>
+                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
+                          Social
+                        </span>
+                        <span>{(quote.socialHandles as string[]).join(", ")}</span>
+                      </div>
                     )}
                     {quote.mood && (
-                      <span className="text-[0.65rem] uppercase tracking-wider text-muted opacity-40">
-                        {quote.mood}
-                      </span>
+                      <div>
+                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
+                          Mood
+                        </span>
+                        <span>{quote.mood}</span>
+                      </div>
+                    )}
+                    {quote.fontPrimary && (
+                      <div>
+                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
+                          Font
+                        </span>
+                        <span>{quote.fontPrimary}</span>
+                      </div>
+                    )}
+                    {quote.submitter && (
+                      <div>
+                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
+                          Submitter
+                        </span>
+                        <span>
+                          {quote.submitter.name} ({quote.submitter.email})
+                        </span>
+                      </div>
+                    )}
+                    {quote.curator && (
+                      <div>
+                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
+                          Curated by
+                        </span>
+                        <span>{quote.curator.name}</span>
+                      </div>
                     )}
                   </div>
+
+                  <div className="text-sm font-light leading-relaxed p-4 bg-white rounded-xl">
+                    &ldquo;{quote.text}&rdquo;
+                  </div>
+
+                  {/* Status actions */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-xs text-foreground/40 uppercase tracking-wider mr-2">
+                      Set Status:
+                    </span>
+                    {STATUS_OPTIONS.map((s) => (
+                      <button
+                        key={s}
+                        disabled={quote.status === s || updatingId === quote.id}
+                        onClick={() => updateStatus(quote.id, s)}
+                        className="px-3 py-1.5 text-[0.65rem] uppercase tracking-widest rounded-full border border-foreground/10 text-foreground/50 hover:text-foreground hover:border-foreground/30 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                        style={
+                          quote.status === s
+                            ? {
+                                color: STATUS_COLORS[s],
+                                borderColor: STATUS_COLORS[s],
+                              }
+                            : {}
+                        }
+                      >
+                        {s.replace("_", " ")}
+                      </button>
+                    ))}
+
+                    <button
+                      onClick={() => deleteQuote(quote.id)}
+                      className="ml-auto px-3 py-1.5 text-[0.65rem] uppercase tracking-widest rounded-full border border-red-200 text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span
-                    className="text-[0.65rem] uppercase tracking-widest font-medium px-2 py-1 rounded"
-                    style={{
-                      color: STATUS_COLORS[quote.status] || "#999",
-                      backgroundColor: `${STATUS_COLORS[quote.status] || "#999"}15`,
-                    }}
-                  >
-                    {quote.status.replace("_", " ")}
-                  </span>
-                  <span className="text-[0.6rem] text-muted">
-                    {new Date(quote.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-              </div>
-            ))}
+              )}
+            </div>
+          ))}
+        </div>
+
+        {filteredQuotes.length === 0 && (
+          <div className="text-center py-20">
+            <p className="text-foreground/40">No quotes match this filter.</p>
           </div>
         )}
       </div>
