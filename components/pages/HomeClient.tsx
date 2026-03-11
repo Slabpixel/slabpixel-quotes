@@ -277,7 +277,7 @@ function FeedItem({
       <div className="max-lg:hidden flex items-center max-lg:row-start-2 max-lg:col-start-2 max-lg:pl-0">
         {today && (
           <div className="flex flex-row items-center gap-[0.85rem] flex-nowrap">
-            <p className="text-[0.55rem] tracking-widest uppercase text-muted leading-[1.6] m-0 shrink-0">
+            <p className="text-sm m-0 shrink-0">
               Quotes
               <br />
               of Today
@@ -293,7 +293,7 @@ function FeedItem({
           <span>
             By
           </span>
-          <span>
+          <span className="truncate line-clamp-1 max-w-24">
             {submitterName}
           </span>
         </div>

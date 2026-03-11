@@ -4,6 +4,7 @@
  */
 
 import { type QuoteData } from "@/types/quote";
+import { getPaletteForQuote } from "@/lib/quote-presets";
 import {
   parseSocialHandle,
   loadSocialIconImage,
@@ -21,28 +22,6 @@ async function getCachedIcon(
   const img = await loadSocialIconImage(platform, color);
   iconCache.set(key, img);
   return img;
-}
-
-const DEFAULT_PALETTES = [
-  ["#1a1a2e", "#e94560", "#f0f0f0", "#999999"],
-  ["#0d1b2a", "#66d9ef", "#e0e1dd", "#415a77"],
-  ["#2d2d2d", "#f5c842", "#f5f5f0", "#8b7a3a"],
-  ["#1b1b2f", "#e43f5a", "#f0f0f0", "#7a7a9a"],
-  ["#0b0c10", "#66fcf1", "#e8e8e8", "#45a29e"],
-  ["#1a1a1a", "#ff6b6b", "#fefefe", "#c44569"],
-  ["#16213e", "#a78bfa", "#eef0ff", "#533483"],
-  ["#2c003e", "#d72631", "#f5f5f5", "#a2d5c6"],
-];
-
-function getPalette(quote: QuoteData, index: number): string[] {
-  if (quote.colorPalette) {
-    try {
-      return JSON.parse(quote.colorPalette);
-    } catch {
-      // fall through
-    }
-  }
-  return DEFAULT_PALETTES[index % DEFAULT_PALETTES.length];
 }
 
 export interface CardTexture {
@@ -158,7 +137,7 @@ export async function renderCardToCanvas(
   const ctx = canvas.getContext("2d")!;
   ctx.scale(2, 2);
 
-  const palette = getPalette(quote, index);
+  const palette = getPaletteForQuote(quote, index);
   const bgColor = palette[0] || "#1a1a2e";
   const accentColor = palette[1] || "#e94560";
   const textColor = palette[2] || "#f0f0f0";

@@ -28,6 +28,10 @@ p {
   line-height: 1;
 }
 
+.scrollbar-hide {
+  scrollbar-width: none;
+}
+
 /* WebGL canvas handles its own scroll; no body overflow lock needed */
 
 ::selection {
