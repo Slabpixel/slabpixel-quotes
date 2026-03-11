@@ -220,7 +220,7 @@ function FeedItem({
 
       {/* ── 2 · Timeline column ───────────────────────── */}
       <div className="relative h-full flex items-center justify-end max-lg:hidden">
-        <div className="flex flex-col items-end text-sm py-4 leading-normal select-none bg-white">
+        <div className="flex flex-col items-end text-sm py-4 leading-none select-none bg-white">
           <span>{date.day}</span>
           <span>{date.year}</span>
         </div>
