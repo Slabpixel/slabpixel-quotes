@@ -156,7 +156,7 @@ function ShareButton({ quote }: { quote: QuoteData }) {
 // ── Submit CTA card — first child of the feed list ────────────────────────
 function SubmitCard({ total }: { total: number }) {
   return (
-    <div className="grid grid-cols-[4rem_8rem_1fr_4rem_6rem] gap-8 items-center max-lg:grid-cols-[1fr]">
+    <div className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] gap-8 items-center max-lg:grid-cols-[1fr]">
       {/* Col 1: empty */}
       <div aria-hidden="true" className="max-lg:hidden" />
 
@@ -192,12 +192,10 @@ function FeedItem({
   quote,
   index,
   total,
-  isLast,
 }: {
   quote: QuoteData;
   index: number;
   total: number;
-  isLast: boolean;
 }) {
   const no = total - index;
   const date = formatDate(quote.publishedAt);
@@ -207,7 +205,7 @@ function FeedItem({
   const bg = getBackground(quote.backgroundId);
 
   return (
-    <article className="grid grid-cols-[4rem_8rem_1fr_4rem_6rem] items-center min-h-110 gap-8 max-lg:grid-cols-[1fr] max-lg:grid-rows-[auto] max-lg:min-h-0 max-lg:gap-2">
+    <article className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] items-center min-h-110 gap-8 max-lg:grid-cols-[1fr] max-lg:grid-rows-[auto] max-lg:min-h-0 max-lg:gap-2">
       {/* ── 1 · Index number ─────────────────────────── */}
       <div className="max-lg:hidden flex flex-col items-end leading-[1.1] select-none max-lg:row-start-1 max-lg:col-start-1 max-lg:items-start max-lg:pr-0">
         <span className="text-sm">
@@ -224,16 +222,13 @@ function FeedItem({
           <span>{date.day}</span>
           <span>{date.year}</span>
         </div>
-        {isLast && (
-          <span className="absolute right-[14px] bottom-0 size-2 rounded-full bg-muted" />
-        )}
       </div>
 
       {/* ── 3 · Card ──────────────────────────────────── */}
       <div
         className={cn(
           "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8",
-          "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-18",
+          "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-19",
           bg ? "" : "bg-[#ebebeb]",
         )}
         style={
@@ -359,18 +354,23 @@ export default function HomeClient({ quotes }: HomeClientProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground">
-      <div className="max-w-7xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
+      <div className="max-w-8xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
         <div className="relative">
           {/* Animated vertical timeline line — GSAP scrubs height */}
-          <div
-            className="absolute left-51.5 top-0 bottom-0 w-px bg-border -translate-x-1/2 pointer-events-none max-lg:hidden"
-            aria-hidden="true"
-          >
+          <div className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] max-lg:grid-cols-[1fr] absolute inset-0 mt-4">
+            <div aria-hidden="true" className="max-lg:hidden" />
             <div
-              className="w-full bg-foreground origin-top"
-              ref={fillRef}
-              style={{ height: "0%" }}
-            />
+              className="relative h-full w-px bg-border pointer-events-none max-lg:hidden place-self-end max-xl:mr-2"
+              aria-hidden="true"
+            >
+              <div
+                className="w-full bg-foreground origin-top"
+                ref={fillRef}
+                style={{ height: "0%" }}
+              />
+              <div className="absolute left-1/2 -translate-x-1/2 top-0 size-2 rounded-full bg-foreground" />
+              <div className="absolute left-1/2 -translate-x-1/2 bottom-0 size-2 rounded-full bg-muted" />
+            </div>
           </div>
 
           {/* Submit card first, then quote items */}
@@ -382,7 +382,6 @@ export default function HomeClient({ quotes }: HomeClientProps) {
                 quote={quote}
                 index={i}
                 total={displayQuotes.length}
-                isLast={i === displayQuotes.length - 1}
               />
             ))}
           </div>
