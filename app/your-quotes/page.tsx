@@ -29,6 +29,7 @@ export default async function YourQuotesPage() {
 
   const serializedQuotes = quotes.map((q) => ({
     ...q,
+    socialHandles: Array.isArray(q.socialHandles) ? (q.socialHandles as string[]) : [],
     createdAt: q.createdAt.toISOString(),
     publishedAt: q.publishedAt?.toISOString() ?? null,
   }));
