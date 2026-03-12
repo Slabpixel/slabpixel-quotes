@@ -2,6 +2,23 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { normalizeSocialHandles } from "@/lib/queries/quote";
+
+const quoteSelectForMe = {
+  id: true,
+  text: true,
+  attribution: true,
+  socialHandles: true,
+  authorPhoto: true,
+  fontPrimary: true,
+  fontSecondary: true,
+  colorPalette: true,
+  mood: true,
+  status: true,
+  cardImageUrl: true,
+  publishedAt: true,
+  createdAt: true,
+} as const;
 
 // GET /api/me/quotes — list the current user's submitted quotes
 export async function GET(request: NextRequest) {
@@ -23,27 +40,20 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
-      select: {
-        id: true,
-        text: true,
-        attribution: true,
-        socialHandles: true,
-        authorPhoto: true,
-        fontPrimary: true,
-        fontSecondary: true,
-        colorPalette: true,
-        mood: true,
-        status: true,
-        cardImageUrl: true,
-        publishedAt: true,
-        createdAt: true,
-      },
+      select: quoteSelectForMe,
     }),
     prisma.quote.count({ where }),
   ]);
 
+  const serialized = quotes.map((q) => ({
+    ...q,
+    socialHandles: normalizeSocialHandles(q.socialHandles),
+    publishedAt: q.publishedAt?.toISOString() ?? null,
+    createdAt: q.createdAt.toISOString(),
+  }));
+
   return NextResponse.json({
-    quotes,
+    quotes: serialized,
     pagination: {
       page,
       limit,

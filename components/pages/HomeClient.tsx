@@ -307,7 +307,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   const listRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
 
-  // ── GSAP ScrollTrigger — smooth scrubbed timeline fill ──────────────────
+  // ── GSAP ScrollTrigger — smooth scrubbed timeline fill (synced via Lenis + gsap.ticker) ──────────────────
   useGSAP(() => {
 
     const fill = fillRef.current;

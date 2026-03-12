@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { normalizeSocialHandles } from "@/lib/queries/quote";
 
 // GET /api/dashboard/quotes — list all quotes for admin review
 export async function GET(request: NextRequest) {
@@ -44,8 +45,16 @@ export async function GET(request: NextRequest) {
     prisma.quote.count({ where }),
   ]);
 
+  const serialized = quotes.map((q) => ({
+    ...q,
+    socialHandles: normalizeSocialHandles(q.socialHandles),
+    createdAt: q.createdAt.toISOString(),
+    updatedAt: q.updatedAt.toISOString(),
+    publishedAt: q.publishedAt?.toISOString() ?? null,
+  }));
+
   return NextResponse.json({
-    quotes,
+    quotes: serialized,
     pagination: {
       page,
       limit,

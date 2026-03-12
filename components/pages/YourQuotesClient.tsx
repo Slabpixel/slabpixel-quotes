@@ -1,14 +1,8 @@
 "use client";
 
 import Link from "next/link";
-
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: "#d97706",
-  IN_REVIEW: "#2563eb",
-  APPROVED: "#059669",
-  PUBLISHED: "#7c3aed",
-  REJECTED: "#dc2626",
-};
+import { STATUS_COLORS } from "@/lib/constants/quote-status";
+import StatusBadge from "@/components/StatusBadge";
 
 interface YourQuotesQuote {
   id: string;
@@ -138,15 +132,7 @@ export default function YourQuotesClient({
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span
-                    className="text-[0.65rem] uppercase tracking-widest font-medium px-2 py-1 rounded-full"
-                    style={{
-                      color: STATUS_COLORS[quote.status] || "#999",
-                      backgroundColor: `${STATUS_COLORS[quote.status] || "#999"}12`,
-                    }}
-                  >
-                    {quote.status.replace("_", " ")}
-                  </span>
+                  <StatusBadge status={quote.status} />
                   <span className="text-[0.6rem] text-foreground/30">
                     {new Date(quote.createdAt).toLocaleDateString()}
                   </span>

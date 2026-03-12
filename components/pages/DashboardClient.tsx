@@ -1,22 +1,8 @@
 "use client";
 
 import { useState } from "react";
-
-const STATUS_COLORS: Record<string, string> = {
-  PENDING: "#d97706",
-  IN_REVIEW: "#2563eb",
-  APPROVED: "#059669",
-  PUBLISHED: "#7c3aed",
-  REJECTED: "#dc2626",
-};
-
-const STATUS_OPTIONS = [
-  "PENDING",
-  "IN_REVIEW",
-  "APPROVED",
-  "PUBLISHED",
-  "REJECTED",
-] as const;
+import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/constants/quote-status";
+import StatusBadge from "@/components/StatusBadge";
 
 interface DashboardQuote {
   id: string;
@@ -52,6 +38,7 @@ interface DashboardStats {
   total: number;
   pending: number;
   inReview: number;
+  approved: number;
   published: number;
   rejected: number;
 }
@@ -227,20 +214,10 @@ export default function DashboardClient({
                   — {quote.attribution}
                 </span>
 
-                <span
-                  className="text-[0.6rem] uppercase tracking-widest font-medium px-2 py-0.5 rounded-full shrink-0"
-                  style={{
-                    color: STATUS_COLORS[quote.status],
-                    backgroundColor: `${STATUS_COLORS[quote.status]}12`,
-                  }}
-                >
-                  {quote.status.replace("_", " ")}
-                </span>
-
+                <StatusBadge status={quote.status} className="shrink-0 text-[0.6rem] py-0.5" />
                 <span className="text-[0.6rem] text-foreground/30 shrink-0">
                   {new Date(quote.createdAt).toLocaleDateString()}
                 </span>
-
                 <span className="text-foreground/30 text-xs">
                   {expandedId === quote.id ? "▲" : "▼"}
                 </span>
@@ -261,7 +238,7 @@ export default function DashboardClient({
                         <span className="text-foreground/40 uppercase tracking-wider block mb-1">
                           Social
                         </span>
-                        <span>{(quote.socialHandles as string[]).join(", ")}</span>
+                        <span>{quote.socialHandles.join(", ")}</span>
                       </div>
                     )}
                     {quote.mood && (

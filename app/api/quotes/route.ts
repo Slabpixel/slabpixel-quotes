@@ -3,6 +3,10 @@ import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { submitQuoteSchema } from "@/lib/validations/quote";
 import { headers } from "next/headers";
+import {
+  quoteSelectForApiList,
+  normalizeSocialHandles,
+} from "@/lib/queries/quote";
 
 // GET /api/quotes — list published quotes (public)
 export async function GET(request: NextRequest) {
@@ -22,32 +26,19 @@ export async function GET(request: NextRequest) {
       orderBy: { publishedAt: "desc" },
       skip: (page - 1) * limit,
       take: limit,
-      select: {
-        id: true,
-        text: true,
-        attribution: true,
-        socialHandles: true,
-        authorPhoto: true,
-        fontPrimary: true,
-        fontSecondary: true,
-        colorPalette: true,
-        mood: true,
-        cardImageUrl: true,
-        publishedAt: true,
-        submitter: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-      },
+      select: quoteSelectForApiList,
     }),
     prisma.quote.count({ where }),
   ]);
 
+  const serialized = quotes.map((q) => ({
+    ...q,
+    socialHandles: normalizeSocialHandles(q.socialHandles),
+    publishedAt: q.publishedAt?.toISOString() ?? null,
+  }));
+
   return NextResponse.json({
-    quotes,
+    quotes: serialized,
     pagination: {
       page,
       limit,
