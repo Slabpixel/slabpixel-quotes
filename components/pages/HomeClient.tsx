@@ -9,6 +9,8 @@ import { useGSAP } from "@gsap/react";
 import { type QuoteData } from "@/types/quote";
 import { getBackground } from "@/lib/backgrounds";
 import { cn } from "@/lib/cn";
+import { useLenis } from "lenis/react";
+import QuoteOverlay from "@/components/QuoteOverlay";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
@@ -192,10 +194,14 @@ function FeedItem({
   quote,
   index,
   total,
+  isSelected,
+  onSelect,
 }: {
   quote: QuoteData;
   index: number;
   total: number;
+  isSelected?: boolean;
+  onSelect: (payload: { quote: QuoteData; rect: DOMRect; cardRect: DOMRect }) => void;
 }) {
   const no = total - index;
   const date = formatDate(quote.publishedAt);
@@ -203,6 +209,16 @@ function FeedItem({
   const avatarSrc = resolveAvatar(quote.submitter);
   const submitterName = quote.submitter?.name ?? "Anonymous";
   const bg = getBackground(quote.backgroundId);
+
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const whiteCardRef = useRef<HTMLDivElement | null>(null);
+
+  const handleClick = () => {
+    if (!containerRef.current || !whiteCardRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const cardRect = whiteCardRef.current.getBoundingClientRect();
+    onSelect({ quote, rect, cardRect });
+  };
 
   return (
     <article className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] items-center min-h-110 gap-8 max-lg:grid-cols-[1fr] max-lg:grid-rows-[auto] max-lg:min-h-0 max-lg:gap-2">
@@ -226,8 +242,10 @@ function FeedItem({
 
       {/* ── 3 · Card ──────────────────────────────────── */}
       <div
+        ref={containerRef}
+        onClick={handleClick}
         className={cn(
-          "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8",
+          "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8 cursor-pointer",
           "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-19",
           bg ? "" : "bg-[#ebebeb]",
         )}
@@ -247,7 +265,11 @@ function FeedItem({
         )}
 
         <div
-          className="relative z-1 bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
+          ref={whiteCardRef}
+          className={cn(
+            "relative z-1 bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4",
+            isSelected && "invisible",
+          )}
           style={{
             fontFamily: quote.fontPrimary
               ? `"${quote.fontPrimary}", serif`
@@ -303,9 +325,27 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ quotes }: HomeClientProps) {
+  const [selected, setSelected] = useState<{
+    quote: QuoteData;
+    rect: { top: number; left: number; width: number; height: number };
+    cardRect: { top: number; left: number; width: number; height: number };
+  } | null>(null);
+
+  const lenis = useLenis();
+
   const displayQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES;
   const listRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
+
+  // Pause Lenis when overlay is open
+  useEffect(() => {
+    if (!lenis) return;
+    if (selected) {
+      lenis.stop();
+    } else {
+      lenis.start();
+    }
+  }, [lenis, selected]);
 
   // ── GSAP ScrollTrigger — smooth scrubbed timeline fill (synced via Lenis + gsap.ticker) ──────────────────
   useGSAP(() => {
@@ -353,7 +393,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   }, [displayQuotes]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground no-scrollbar">
       <div className="max-w-8xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
         <div className="relative">
           {/* Animated vertical timeline line — GSAP scrubs height */}
@@ -382,11 +422,37 @@ export default function HomeClient({ quotes }: HomeClientProps) {
                 quote={quote}
                 index={i}
                 total={displayQuotes.length}
+                isSelected={selected?.quote.id === quote.id}
+                onSelect={({ quote, rect, cardRect }) => {
+                  setSelected({
+                    quote,
+                    rect: {
+                      top: rect.top,
+                      left: rect.left,
+                      width: rect.width,
+                      height: rect.height,
+                    },
+                    cardRect: {
+                      top: cardRect.top,
+                      left: cardRect.left,
+                      width: cardRect.width,
+                      height: cardRect.height,
+                    },
+                  });
+                }}
               />
             ))}
           </div>
         </div>
       </div>
+      {selected && (
+        <QuoteOverlay
+          quote={selected.quote}
+          rect={selected.rect}
+          cardRect={selected.cardRect}
+          onClose={() => setSelected(null)}
+        />
+      )}
     </div>
   );
 }
