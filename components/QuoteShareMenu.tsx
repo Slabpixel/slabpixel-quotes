@@ -124,7 +124,7 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
   ][];
 
   return (
-    <div className="relative inline-flex" ref={menuRef}>
+    <div className="relative inline-flex font-sans" ref={menuRef}>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -138,7 +138,7 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
           ? "Generating…"
           : status === "error"
             ? "Failed"
-            : "Share"}
+            : "Share Quotes"}
       </button>
 
       {open && (

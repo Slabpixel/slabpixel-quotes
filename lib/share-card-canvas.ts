@@ -175,14 +175,6 @@ export async function generateShareCardBlob(
     y += metaFontSize + 4;
   }
 
-  // 5) Submitter line
-  const submitterName = quote.submitter?.name ?? "Anonymous";
-  ctx.font = `${metaFontSize}px system-ui, sans-serif`;
-  ctx.fillStyle = "rgba(0,0,0,0.55)";
-  ctx.fillText(`By ${submitterName}`, cardX + innerPad, y);
-  if (quote.socialHandles?.length) {
-    ctx.fillText(quote.socialHandles.join(" · "), cardX + innerPad, y + metaFontSize + 2);
-  }
   // 6) SlabPixel branding bottom-right
   ctx.font = `600 ${metaFontSize - 1}px system-ui, sans-serif`;
   ctx.fillStyle = "rgba(0,0,0,0.4)";
