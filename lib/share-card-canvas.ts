@@ -81,11 +81,21 @@ function wrapText(
   return lines;
 }
 
+export type ShareCardProgressStep =
+  | "start"
+  | "background"
+  | "font"
+  | "layout"
+  | "encode"
+  | "done";
+
 export async function generateShareCardBlob(
   quote: QuoteData,
   platform: SharePlatform,
   origin: string,
+  onProgress?: (step: ShareCardProgressStep) => void,
 ): Promise<Blob> {
+  onProgress?.("start");
   const config = SHARE_PLATFORMS[platform];
   if (!config) throw new Error("Invalid platform");
   const { width: w, height: h } = config;
@@ -101,6 +111,7 @@ export async function generateShareCardBlob(
   const bgColor = palette[0] || "#111111";
 
   // 1) Background
+  onProgress?.("background");
   if (bg && origin) {
     try {
       const img = await loadImage(`${origin}${bg.src}`);
@@ -121,6 +132,7 @@ export async function generateShareCardBlob(
   ctx.fillStyle = "rgba(0,0,0,0.3)";
   ctx.fillRect(0, 0, w, h);
 
+  onProgress?.("font");
   await ensureFontLoaded(quote.fontPrimary);
   const fontFamily = quote.fontPrimary
     ? `"${quote.fontPrimary}", serif`
@@ -140,6 +152,7 @@ export async function generateShareCardBlob(
   const textWidth = cardWidth - innerPad * 2;
 
   // Measure quote lines to get card height (no extra quotation marks – match site card)
+  onProgress?.("layout");
   ctx.font = `500 ${quoteFontSize}px ${fontFamily}`;
   const quoteLines = wrapText(ctx, quote.text, textWidth);
   const lineHeight = Math.round(quoteFontSize * 1.4);
@@ -198,9 +211,17 @@ export async function generateShareCardBlob(
   const brandW = ctx.measureText(brand).width;
   ctx.fillText(brand, cardX + cardWidth - innerPad - brandW, cardY2 + cardHeight - innerPad - metaFontSize);
 
+  onProgress?.("encode");
   return new Promise((resolve, reject) => {
     canvas.toBlob(
-      (blob) => (blob ? resolve(blob) : reject(new Error("toBlob failed"))),
+      (blob) => {
+        if (blob) {
+          onProgress?.("done");
+          resolve(blob);
+        } else {
+          reject(new Error("toBlob failed"));
+        }
+      },
       "image/png",
       1,
     );
