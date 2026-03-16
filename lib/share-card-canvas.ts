@@ -15,8 +15,17 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
-    img.onerror = reject;
+    const timeout = window.setTimeout(() => {
+      reject(new Error("Image load timeout"));
+    }, 5000);
+    img.onload = () => {
+      window.clearTimeout(timeout);
+      resolve(img);
+    };
+    img.onerror = (err) => {
+      window.clearTimeout(timeout);
+      reject(err);
+    };
     img.src = src;
   });
 }
@@ -36,7 +45,14 @@ async function ensureFontLoaded(fontName: string | null): Promise<void> {
     }
   }
   try {
-    await document.fonts.load(`20px "${fontName}"`);
+    const loadPromise = document.fonts.load(`20px "${fontName}"`).then(() => {
+      /* loaded */
+    });
+    // Avoid hanging forever on browsers that never resolve fonts.load
+    await Promise.race([
+      loadPromise,
+      new Promise<void>((resolve) => setTimeout(resolve, 1500)),
+    ]);
   } catch {
     // use fallback
   }
@@ -123,9 +139,9 @@ export async function generateShareCardBlob(
   const metaFontSize = Math.round(12 * (Math.min(w, h) / 600));
   const textWidth = cardWidth - innerPad * 2;
 
-  // Measure quote lines to get card height
+  // Measure quote lines to get card height (no extra quotation marks – match site card)
   ctx.font = `500 ${quoteFontSize}px ${fontFamily}`;
-  const quoteLines = wrapText(ctx, `"${quote.text}"`, textWidth);
+  const quoteLines = wrapText(ctx, quote.text, textWidth);
   const lineHeight = Math.round(quoteFontSize * 1.4);
   const quoteBlockHeight = quoteLines.length * lineHeight + 12;
   const attrHeight = attrFontSize * 1.5;
