@@ -28,6 +28,7 @@ interface QuoteOverlayProps {
 export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOverlayProps) {
   const frameRef = useRef<HTMLDivElement | null>(null);
   const whiteCardRef = useRef<HTMLDivElement | null>(null);
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null); // round X button only
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
   // Compute background image / colors
@@ -58,6 +59,9 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
     // Position white card in viewport coordinates (fixed) so it animates straight to center, not toward the frame’s center
     gsap.set(whiteCard, { width: cWidth, height: cHeight });
 
+    const closeBtn = closeButtonRef.current;
+    if (closeBtn) gsap.set(closeBtn, { opacity: 0, visibility: "visible", x: -32, y: 32 });
+
     const tl = gsap.timeline();
     tl.to(
       frame,
@@ -71,7 +75,27 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
         ease: "power3.inOut",
       },
       0,
-    );
+    )
+    tl.to(
+      whiteCard,
+      {
+        scale: 1.2,
+        ease: "power3.inOut",
+        duration: 0.7,
+      },
+      "<0.1",
+    )
+    if (closeBtn) {
+      tl.to(closeBtn,
+        {
+          opacity: 1,
+          duration: 0.35,
+          ease: "power2.out",
+          x: 0,
+          y: 0
+        }
+        , 0.4);
+    }
 
     // White card FLIPs to viewport center (fixed coords so no “upper left” jump)
     tlRef.current = tl;
@@ -139,31 +163,44 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
       {/* Click backdrop: close modal when clicking the background */}
       <button
         type="button"
-        aria-label="Close"
+        aria-label="Close overlay"
         className="absolute inset-0 z-1 cursor-default"
         onClick={handleClose}
       />
 
-      {/* White card */}
-      <div
-        ref={whiteCardRef}
-        className="relative z-2 bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
-        style={{
-          fontFamily: quote.fontPrimary
-            ? `"${quote.fontPrimary}", serif`
-            : undefined,
-        }}
-      >
-        <div className="flex flex-col gap-4 w-full">
-          <blockquote className="text-lg font-medium leading-1.4 text-foreground m-0">
-            {quote.text}
-          </blockquote>
-          <cite className="text-sm text-foreground/50 not-italic block">
-            {quote.attribution}
-          </cite>
-        </div>
-        <div className="flex justify-end ">
-          <QuoteShareMenu quote={quote} />
+      {/* White card + close button (close outer top-right of card) */}
+      <div className="relative z-2 flex flex-col items-end">
+        <button
+          ref={closeButtonRef}
+          type="button"
+          aria-label="Close"
+          onClick={handleClose}
+          className="absolute -top-16 -right-16 z-10 h-11 w-11 shrink-0 rounded-full border-0 bg-white text-foreground shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex items-center justify-center cursor-pointer hover:bg-card-bg transition-colors invisible"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+            <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        <div
+          ref={whiteCardRef}
+          className="group relative bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
+          style={{
+            fontFamily: quote.fontPrimary
+              ? `"${quote.fontPrimary}", serif`
+              : undefined,
+          }}
+        >
+          <div className="flex flex-col gap-4 w-full">
+            <blockquote className="text-lg font-medium leading-1.4 text-foreground m-0">
+              {quote.text}
+            </blockquote>
+            <cite className="text-sm text-foreground/50 not-italic block">
+              {quote.attribution}
+            </cite>
+          </div>
+          <div className="flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+            <QuoteShareMenu quote={quote} />
+          </div>
         </div>
       </div>
     </div>

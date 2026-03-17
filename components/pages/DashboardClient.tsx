@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { BackToHome } from "@/components/BackToHome";
 import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/constants/quote-status";
 import StatusBadge from "@/components/StatusBadge";
 
@@ -106,6 +107,7 @@ export default function DashboardClient({
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-10 py-24 pt-32 max-lg:px-4 max-lg:pt-24 max-lg:pb-16">
+        <BackToHome />
         <h1 className="text-3xl font-light tracking-tight mb-2">Dashboard</h1>
         <p className="text-sm text-foreground/50 mb-10">
           Manage and curate submitted quotes.

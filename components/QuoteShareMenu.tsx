@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { createPortal } from "react-dom";
 import type { QuoteData } from "@/types/quote";
 import {
   SHARE_PLATFORMS,
@@ -196,70 +197,77 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
         </div>
       )}
 
-      {modalOpen && imageUrl && (
-        <div className="fixed inset-0 z-60 flex items-center justify-center bg-black/50 px-4" onClick={handleCloseModal}>
+      {modalOpen &&
+        imageUrl &&
+        typeof document !== "undefined" &&
+        createPortal(
           <div
-            className="relative w-full max-w-md rounded-3xl bg-white p-4 shadow-[0_18px_60px_rgba(0,0,0,0.35)]"
-            onClick={(e) => e.stopPropagation()}
+            className="fixed inset-0 z-200 flex items-center justify-center bg-black/50 px-4"
+            onClick={handleCloseModal}
           >
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div className="text-sm font-medium text-foreground">
-                Share preview
-                {currentPlatform && (
-                  <span className="ml-1 text-xs text-muted-foreground">
-                    ({SHARE_PLATFORMS[currentPlatform].label})
-                  </span>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={handleCloseModal}
-                className="h-7 w-7 inline-flex items-center justify-center rounded-full border border-black/10 bg-white text-xs text-foreground/70 hover:bg-black/5"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="mb-4 rounded-2xl border border-black/5 bg-[#f5f5f5] p-3">
-              <div className="relative w-full overflow-hidden rounded-xl bg-black/5">
-                <img
-                  src={imageUrl}
-                  alt="Generated share image preview"
-                  className="h-auto w-full"
-                />
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap gap-2">
+            <div
+              className="relative w-full max-w-md rounded-3xl bg-white p-4 shadow-[0_18px_60px_rgba(0,0,0,0.35)]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div className="text-sm font-medium text-foreground">
+                  Share preview
+                  {currentPlatform && (
+                    <span className="ml-1 text-xs text-muted-foreground">
+                      ({SHARE_PLATFORMS[currentPlatform].label})
+                    </span>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={handleShareNow}
-                  disabled={status === "loading"}
-                  className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-medium text-white hover:bg-black/90 disabled:opacity-60"
+                  onClick={handleCloseModal}
+                  className="h-7 w-7 inline-flex items-center justify-center rounded-full border border-black/10 bg-white text-xs text-foreground/70 hover:bg-black/5"
                 >
-                  Share now
-                </button>
-                <button
-                  type="button"
-                  onClick={handleDownload}
-                  className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-medium text-foreground hover:bg-black/5"
-                >
-                  Download
+                  ✕
                 </button>
               </div>
 
-              <button
-                type="button"
-                onClick={handleChangePlatform}
-                className="text-xs font-medium text-foreground/70 hover:text-foreground"
-              >
-                Change social options
-              </button>
+              <div className="mb-4 rounded-2xl border border-black/5 bg-[#f5f5f5] p-3">
+                <div className="relative w-full overflow-hidden rounded-xl bg-black/5">
+                  <img
+                    src={imageUrl}
+                    alt="Generated share image preview"
+                    className="h-auto w-full"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={handleShareNow}
+                    disabled={status === "loading"}
+                    className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-medium text-white hover:bg-black/90 disabled:opacity-60"
+                  >
+                    Share now
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDownload}
+                    className="inline-flex items-center justify-center rounded-full border border-black/10 bg-white px-4 py-2 text-xs font-medium text-foreground hover:bg-black/5"
+                  >
+                    Download
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleChangePlatform}
+                  className="text-xs font-medium text-foreground/70 hover:text-foreground"
+                >
+                  Change social options
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

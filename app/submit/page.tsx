@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, type FormEvent } from "react";
 import { useSession, signIn, signUp } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
+import { BackToHome } from "@/components/BackToHome";
 import { BACKGROUNDS } from "@/lib/backgrounds";
 import { FONT_OPTIONS, PALETTE_PRESETS } from "@/lib/quote-presets";
 import { SOCIAL_PLATFORMS } from "@/lib/social";
@@ -352,6 +353,7 @@ export default function SubmitPage() {
   if (isSubmitted) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
+        <BackToHome />
         <div className="text-center space-y-6 px-6">
           <div className="text-5xl text-foreground">&#x2713;</div>
           <h1 className="text-2xl font-light text-foreground tracking-tight">
@@ -361,7 +363,8 @@ export default function SubmitPage() {
             Your quote has been submitted for review. Our team will curate it
             and, if approved, transform it into a visual artifact.
           </p>
-          <div className="flex gap-4 justify-center pt-4">
+          <div className="flex flex-wrap gap-4 justify-center pt-4">
+            <BackToHome />
             <Link
               href="/explore"
               className="px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-foreground/5 transition-colors"
@@ -382,6 +385,7 @@ export default function SubmitPage() {
 
   return (
     <div className="flex min-h-screen flex-col lg:flex-row">
+      <BackToHome />
       {/* ── Left (desktop) / Top (mobile): Sticky Preview ───────────────────── */}
       <div className="sticky top-0 z-10 h-[calc(42vh+4rem)] min-h-[320px] w-full shrink-0 overflow-hidden bg-background p-2 pt-16 lg:h-screen lg:min-h-0 lg:w-1/2 lg:pt-2">
         <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl lg:rounded-4xl">

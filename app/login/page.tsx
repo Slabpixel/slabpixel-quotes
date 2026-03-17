@@ -1,6 +1,7 @@
 "use client";
 
 import { signIn } from "@/lib/auth-client";
+import { BackToHome } from "@/components/BackToHome";
 import { useSearchParams } from "next/navigation";
 import { Suspense } from "react";
 
@@ -16,7 +17,10 @@ function SignInContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-950">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-neutral-950 relative">
+      <BackToHome
+        className="bg-neutral-800/80 text-neutral-300 hover:bg-neutral-700 hover:text-white"
+      />
       <div className="w-full max-w-md space-y-8 px-6">
         <div className="text-center">
           <h1 className="text-3xl font-bold text-white tracking-tight">

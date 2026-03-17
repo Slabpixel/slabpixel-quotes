@@ -8,6 +8,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { type QuoteData } from "@/types/quote";
 import { getBackground } from "@/lib/backgrounds";
+import { PLACEHOLDER_QUOTES_FEED } from "@/lib/placeholder-quotes";
 import { cn } from "@/lib/cn";
 import { useLenis } from "lenis/react";
 import QuoteOverlay from "@/components/QuoteOverlay";
@@ -15,55 +16,6 @@ import { QuoteShareMenu } from "@/components/QuoteShareMenu";
 
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
-
-// ── Placeholder quotes shown when DB is empty ──────────────────────────────
-const PLACEHOLDER_QUOTES: QuoteData[] = [
-  {
-    id: "ph-1",
-    text: "The best way to predict the future is to design it.",
-    attribution: "Buckminster Fuller",
-    socialHandles: [],
-    authorPhoto: null,
-    backgroundId: null,
-    fontPrimary: "Switzer",
-    fontSecondary: "Inter",
-    colorPalette: null,
-    mood: "bold",
-    cardImageUrl: null,
-    publishedAt: new Date().toISOString(),
-    submitter: { id: "s1", name: "Dianna", profilePhoto: null, image: null },
-  },
-  {
-    id: "ph-2",
-    text: "White space is to be regarded as an active element, not a passive background.",
-    attribution: "Jan Tschichold",
-    socialHandles: [],
-    authorPhoto: null,
-    backgroundId: null,
-    fontPrimary: "Cormorant Garamond",
-    fontSecondary: "Source Sans Pro",
-    colorPalette: null,
-    mood: "serene",
-    cardImageUrl: null,
-    publishedAt: new Date(Date.now() - 86400000).toISOString(),
-    submitter: { id: "s2", name: "Robert", profilePhoto: null, image: null },
-  },
-  {
-    id: "ph-3",
-    text: "Good design is as little design as possible.",
-    attribution: "Dieter Rams",
-    socialHandles: [],
-    authorPhoto: null,
-    backgroundId: null,
-    fontPrimary: "Space Grotesk",
-    fontSecondary: "DM Sans",
-    colorPalette: null,
-    mood: "minimal",
-    cardImageUrl: null,
-    publishedAt: new Date(Date.now() - 172800000).toISOString(),
-    submitter: null,
-  },
-];
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function formatDate(iso: string | null) {
@@ -236,7 +188,7 @@ function FeedItem({
         <div
           ref={whiteCardRef}
           className={cn(
-            "relative z-1 bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4",
+            "group relative z-1 bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4",
             isSelected && "invisible",
           )}
           style={{
@@ -253,7 +205,7 @@ function FeedItem({
               {quote.attribution}
             </cite>
           </div>
-          <div className="flex justify-end ">
+          <div className="flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
             <QuoteShareMenu quote={quote} />
           </div>
         </div>
@@ -302,7 +254,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
 
   const lenis = useLenis();
 
-  const displayQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES;
+  const displayQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES_FEED;
   const listRef = useRef<HTMLDivElement>(null);
   const fillRef = useRef<HTMLDivElement>(null);
 
