@@ -205,7 +205,10 @@ function FeedItem({
               {quote.attribution}
             </cite>
           </div>
-          <div className="flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <div
+            className="flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+            onClick={(e) => e.stopPropagation()}
+          >
             <QuoteShareMenu quote={quote} />
           </div>
         </div>

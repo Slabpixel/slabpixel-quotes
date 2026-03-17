@@ -183,7 +183,7 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
       </div>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 z-50 min-w-48 rounded-2xl bg-white shadow-[0_12px_45px_rgba(0,0,0,0.10)] border border-black/5 py-2">
+        <div className="absolute right-0 bottom-full mb-2 z-50 min-w-48 rounded-2xl bg-white shadow-[0_12px_45px_rgba(0,0,0,0.10)] border border-black/5 py-2">
           {platforms.map(([key, cfg]) => (
             <button
               key={key}
