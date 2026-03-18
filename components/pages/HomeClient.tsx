@@ -335,7 +335,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
       <div className="max-w-8xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
         <div className="relative">
           {/* Animated vertical timeline line — GSAP scrubs height */}
-          <div className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] max-lg:grid-cols-[1fr] absolute inset-0 mt-4">
+          <div className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] max-lg:grid-cols-[1fr] absolute inset-0 mt-4 pointer-events-none">
             <div aria-hidden="true" className="max-lg:hidden" />
             <div
               className="relative h-full w-px bg-border pointer-events-none max-lg:hidden place-self-end max-xl:mr-2"
