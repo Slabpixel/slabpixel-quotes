@@ -276,30 +276,31 @@ function ProfileQuoteCard({
         "aspect-square rounded-xl overflow-hidden cursor-pointer relative group",
         !bg && "bg-card-bg",
       )}
-      style={
-        bg
+      style={{
+        ...getCardPaletteStyle(quote, 0),
+        ...(bg
           ? {
               backgroundImage: `url(${bg.src})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
-          : getCardPaletteStyle(quote, 0)
-      }
+          : null),
+      }}
     >
       {bg && <div className="absolute inset-0 bg-black/25" />}
       <div
         ref={cardRef}
-        className="absolute inset-2 rounded-lg bg-white/95 p-2 flex flex-col justify-end"
+        className="absolute inset-2 rounded-4xl bg-card-bg text-card-text p-2 flex flex-col justify-end transform-gpu"
         style={{
           fontFamily: quote.fontPrimary
             ? `"${quote.fontPrimary}", serif`
             : undefined,
         }}
       >
-        <p className="text-[0.65rem] sm:text-xs font-medium text-foreground line-clamp-2 leading-tight">
+        <p className="text-[0.65rem] sm:text-xs font-medium line-clamp-2 leading-tight">
           {quote.text}
         </p>
-        <p className="text-[0.55rem] sm:text-[0.65rem] text-foreground/50 mt-0.5 truncate">
+        <p className="text-[0.55rem] sm:text-[0.65rem] text-card-accent mt-0.5 truncate">
           {quote.attribution}
         </p>
       </div>
