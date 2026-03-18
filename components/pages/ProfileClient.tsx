@@ -291,7 +291,7 @@ function ProfileQuoteCard({
       <div className="absolute inset-2 flex items-center justify-center">
         <div
           ref={cardRef}
-          className="w-full aspect-16/10 rounded-lg bg-card-bg text-card-text p-2 flex flex-col justify-start transform-gpu"
+          className="w-full rounded-lg bg-card-bg text-card-text p-2 flex flex-col justify-start transform-gpu"
           style={{
             fontFamily: quote.fontPrimary
               ? `"${quote.fontPrimary}", serif`
