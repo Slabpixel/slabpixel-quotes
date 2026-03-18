@@ -133,13 +133,30 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
     return () => window.removeEventListener("keydown", listener);
   });
 
+  // Initial layout so first paint matches source (no jump before useLayoutEffect)
+  const frameStyle = {
+    ...getCardPaletteStyle(quote, 0),
+    position: "fixed" as const,
+    top: rect.top,
+    left: rect.left,
+    width: rect.width,
+    height: rect.height,
+    borderRadius: 32,
+    overflow: "hidden" as const,
+    zIndex: 140,
+  };
+  const whiteCardStyle = {
+    width: cardRect.width,
+    height: cardRect.height,
+  };
+
   return (
     <div
       ref={frameRef}
       role="dialog"
       aria-modal="true"
       aria-label={`Quote by ${quote.attribution}`}
-      style={getCardPaletteStyle(quote, 0)}
+      style={frameStyle}
       className="flex items-center justify-center relative bg-card-bg"
     >
       {/* Background image / overlay */}
@@ -181,8 +198,9 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
         </button>
         <div
           ref={whiteCardRef}
-          className="group relative bg-card-bg text-card-text rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
+          className="group relative bg-card-bg text-card-text rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4 shrink-0"
           style={{
+            ...whiteCardStyle,
             fontFamily: quote.fontPrimary
               ? `"${quote.fontPrimary}", serif`
               : undefined,

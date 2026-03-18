@@ -273,7 +273,7 @@ function ProfileQuoteCard({
         }
       }}
       className={cn(
-        "aspect-4/3 rounded-xl overflow-hidden cursor-pointer relative group",
+        "aspect-3/4 rounded-xl overflow-hidden cursor-pointer relative group",
         !bg && "bg-card-bg",
       )}
       style={{
