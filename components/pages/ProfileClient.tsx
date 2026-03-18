@@ -273,7 +273,7 @@ function ProfileQuoteCard({
         }
       }}
       className={cn(
-        "aspect-square rounded-xl overflow-hidden cursor-pointer relative group",
+        "aspect-4/3 rounded-xl overflow-hidden cursor-pointer relative group",
         !bg && "bg-card-bg",
       )}
       style={{
@@ -288,21 +288,23 @@ function ProfileQuoteCard({
       }}
     >
       {bg && <div className="absolute inset-0 bg-black/25" />}
-      <div
-        ref={cardRef}
-        className="absolute inset-2 rounded-4xl bg-card-bg text-card-text p-2 flex flex-col justify-end transform-gpu"
-        style={{
-          fontFamily: quote.fontPrimary
-            ? `"${quote.fontPrimary}", serif`
-            : undefined,
-        }}
-      >
-        <p className="text-[0.65rem] sm:text-xs font-medium line-clamp-2 leading-tight">
-          {quote.text}
-        </p>
-        <p className="text-[0.55rem] sm:text-[0.65rem] text-card-accent mt-0.5 truncate">
-          {quote.attribution}
-        </p>
+      <div className="absolute inset-2 flex items-center justify-center">
+        <div
+          ref={cardRef}
+          className="w-full aspect-16/10 rounded-lg bg-card-bg text-card-text p-2 flex flex-col justify-start transform-gpu"
+          style={{
+            fontFamily: quote.fontPrimary
+              ? `"${quote.fontPrimary}", serif`
+              : undefined,
+          }}
+        >
+          <p className="text-[0.65rem] sm:text-xs font-medium line-clamp-2 leading-tight">
+            {quote.text}
+          </p>
+          <p className="text-[0.55rem] sm:text-[0.65rem] text-card-accent mt-0.5 truncate">
+            {quote.attribution}
+          </p>
+        </div>
       </div>
     </div>
   );
