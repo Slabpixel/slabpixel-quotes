@@ -37,7 +37,7 @@ export interface PalettePreset {
 }
 
 export const PALETTE_PRESETS: PalettePreset[] = [
-  { name: "Slate", colors: ["#f5f5f5", "#c62828", "#1a1a1a", "#424242"] },
+  { name: "Slate", colors: ["#ffffff", "#c62828", "#1a1a1a", "#424242"] },
   { name: "Ocean", colors: ["#e3f2fd", "#0277bd", "#0d47a1", "#455a64"] },
   { name: "Earth", colors: ["#faf6f0", "#bf360c", "#3e2723", "#5d4037"] },
   { name: "Rose", colors: ["#fce4ec", "#c2185b", "#880e4f", "#ad1457"] },
@@ -69,7 +69,7 @@ export function getPaletteForQuote(
   return DEFAULT_PALETTES[index % DEFAULT_PALETTES.length];
 }
 
-const CARD_PALETTE_FALLBACKS = ["#f5f5f5", "#c62828", "#1a1a1a", "#424242"] as const;
+const CARD_PALETTE_FALLBACKS = ["#ffffff", "#c62828", "#1a1a1a", "#424242"] as const;
 
 /**
  * Returns a React style object that sets card palette CSS variables for a quote.

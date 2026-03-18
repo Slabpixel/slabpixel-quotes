@@ -181,7 +181,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
         </button>
         <div
           ref={whiteCardRef}
-          className="group relative bg-white rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
+          className="group relative bg-card-bg text-card-text rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
           style={{
             fontFamily: quote.fontPrimary
               ? `"${quote.fontPrimary}", serif`
@@ -189,10 +189,10 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
           }}
         >
           <div className="flex flex-col gap-4 w-full">
-            <blockquote className="text-lg font-medium leading-1.4 text-foreground m-0">
+            <blockquote className="text-lg font-medium leading-1.4 m-0">
               {quote.text}
             </blockquote>
-            <cite className="text-sm text-foreground/50 not-italic block">
+            <cite className="text-sm text-card-accent not-italic block">
               {quote.attribution}
             </cite>
           </div>
