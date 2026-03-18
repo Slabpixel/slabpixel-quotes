@@ -9,7 +9,7 @@ import { getBackground } from "@/lib/backgrounds";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { cn } from "@/lib/cn";
 import SiteHeader from "@/components/SiteHeader";
-import BackToHome from "@/components/BackToHome";
+import { BackToHome } from "@/components/BackToHome";
 import QuoteOverlay from "@/components/QuoteOverlay";
 
 interface ProfileClientProps {
