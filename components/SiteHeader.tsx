@@ -98,9 +98,13 @@ export default function SiteHeader() {
             aria-modal="true"
           >
             <div className="flex flex-col gap-4 w-full overflow-hidden">
-              {/* User info row */}
+              {/* User info row — click goes to profile */}
               {user && (
-                <div className="relative flex items-center gap-2">
+                <Link
+                  href={`/profile/${user.id}`}
+                  onClick={close}
+                  className="relative flex items-center gap-2 no-underline text-foreground hover:opacity-90 transition-opacity rounded-lg -mx-1 px-1 py-0.5"
+                >
                   <div className="size-10 rounded-full bg-[#ddd] overflow-hidden flex items-center justify-center shrink-0">
                     {user?.image ? (
                       <Image
@@ -116,8 +120,7 @@ export default function SiteHeader() {
                       </span>
                     )}
                   </div>
-
-                  <div className="flex-1 min-w-0 flex-col gap-1.25 flex">
+                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
                     <p className="font-medium text-foreground">
                       {user?.name}
                     </p>
@@ -125,7 +128,7 @@ export default function SiteHeader() {
                       {user?.email}
                     </p>
                   </div>
-                </div>
+                </Link>
               )}
 
               <div className="gap-25 flex flex-col">
@@ -162,22 +165,21 @@ export default function SiteHeader() {
                     <>
                       {admin ? (
                         <Link
-                        href="/dashboard"
-                        className={cn(navLinkBase)}
-                        onClick={close}
-                      >
-                        Dashboard
-                      </Link>
-                      ) :
-                      <Link
-                        href="/your-quotes"
-                        className={cn(navLinkBase)}
-                        onClick={close}
-                      >
-                        Your Quotes
-                      </Link>
-                      }
-                      
+                          href="/dashboard"
+                          className={cn(navLinkBase)}
+                          onClick={close}
+                        >
+                          Dashboard
+                        </Link>
+                      ) : (
+                        <Link
+                          href="/your-quotes"
+                          className={cn(navLinkBase)}
+                          onClick={close}
+                        >
+                          Your Quotes
+                        </Link>
+                      )}
                       <button
                         className={cn(navLinkBase, "block w-full")}
                         onClick={() => {

@@ -18,6 +18,7 @@ model User {
   emailVerified Boolean   @default(false)
   image         String?   @db.Text
   profilePhoto  String?   @db.Text // custom uploaded profile photo (preferred over image)
+  bio           String?   @db.Text // profile bio (user-editable)
   role          String    @default("user") // "user" | "admin"
   banned        Boolean   @default(false)
   banReason     String?   @db.Text

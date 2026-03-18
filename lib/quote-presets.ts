@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 /**
  * Shared quote customization presets.
  * Used by: submit page, QuoteCard, card-renderer, and any UI that shows font/palette/mood options.
@@ -65,6 +67,29 @@ export function getPaletteForQuote(
     }
   }
   return DEFAULT_PALETTES[index % DEFAULT_PALETTES.length];
+}
+
+const CARD_PALETTE_FALLBACKS = ["#111111", "#e94560", "#f0f0f0", "#999999"] as const;
+
+/**
+ * Returns a React style object that sets card palette CSS variables for a quote.
+ * Use on the card container so children can use Tailwind classes bg-card-bg, text-card-accent, etc.
+ * Also sets --accent and --text for backward compatibility with existing mood CSS.
+ */
+export function getCardPaletteStyle(
+  quote: { colorPalette?: string | null },
+  index: number,
+): CSSProperties {
+  const palette = getPaletteForQuote(quote, index);
+  const [bg, accent, text, muted] = palette.map((c, i) => c || CARD_PALETTE_FALLBACKS[i]);
+  return {
+    "--card-bg": bg,
+    "--card-accent": accent,
+    "--card-text": text,
+    "--card-muted": muted,
+    "--accent": accent,
+    "--text": text,
+  } as CSSProperties;
 }
 
 // ─── Mood options (for any mood selector; matches seed + CSS classes) ──────────

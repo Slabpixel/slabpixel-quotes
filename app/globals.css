@@ -17,6 +17,9 @@ body::-webkit-scrollbar {
   --accent: #e94560;
   --muted: #d9d9d9;
   --card-bg: #f5f5f5;
+  --card-accent: #e94560;
+  --card-text: #1a1a1a;
+  --card-muted: #999999;
   --border: #e0e0e0;
 }
 
@@ -26,6 +29,9 @@ body::-webkit-scrollbar {
   --color-accent: var(--accent);
   --color-muted: var(--muted);
   --color-card-bg: var(--card-bg);
+  --color-card-accent: var(--card-accent);
+  --color-card-text: var(--card-text);
+  --color-card-muted: var(--card-muted);
   --color-border: var(--border);
   --container-8xl: 90rem;
 }

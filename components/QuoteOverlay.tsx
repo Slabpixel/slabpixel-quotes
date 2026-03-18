@@ -5,7 +5,7 @@ import Image from "next/image";
 import gsap from "gsap";
 import type { QuoteData } from "@/types/quote";
 import { getBackground } from "@/lib/backgrounds";
-import { getPaletteForQuote } from "@/lib/quote-presets";
+import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { QuoteShareMenu } from "@/components/QuoteShareMenu";
 
 interface QuoteOverlayProps {
@@ -33,8 +33,6 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
 
   // Compute background image / colors
   const bg = getBackground(quote.backgroundId);
-  const palette = getPaletteForQuote(quote, 0);
-  const bgColor = palette[0] || "#111111";
 
   // Opening: frame expands from feed rect to fullscreen; card stays centered in frame (flex) so it moves with it to viewport center
   useLayoutEffect(() => {
@@ -141,8 +139,8 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
       role="dialog"
       aria-modal="true"
       aria-label={`Quote by ${quote.attribution}`}
-      style={{ backgroundColor: bgColor }}
-      className="flex items-center justify-center relative"
+      style={getCardPaletteStyle(quote, 0)}
+      className="flex items-center justify-center relative bg-card-bg"
     >
       {/* Background image / overlay */}
       {bg ? (

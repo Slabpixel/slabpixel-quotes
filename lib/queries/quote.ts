@@ -204,6 +204,21 @@ export async function getQuoteStats() {
   }
 }
 
+/** Fetch published quotes by submitter (for public profile). */
+export async function getPublishedQuotesByUser(userId: string): Promise<QuoteData[]> {
+  try {
+    const quotes = await prisma.quote.findMany({
+      where: { submitterId: userId, status: "PUBLISHED" },
+      orderBy: { publishedAt: "desc" },
+      select: quoteSelectForFeed,
+    });
+    return quotes.map(serializeQuoteForFeed);
+  } catch (err) {
+    if (usePlaceholderQuotesInDev()) return [];
+    throw err;
+  }
+}
+
 /** Fetch all quotes + stats for dashboard (admin). */
 export async function getDashboardQuotesWithStats() {
   try {
