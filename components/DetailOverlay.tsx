@@ -4,6 +4,7 @@ import { type QuoteData } from "@/types/quote";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { useGoogleFont } from "@/lib/use-google-font";
+import { getCardPaletteStyle } from "@/lib/quote-presets";
 import SocialIcon from "./SocialIcon";
 
 interface DetailOverlayProps {
@@ -107,21 +108,8 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
     }
   }, [quote]);
 
-  // Parse colors
-  let bgColor = "#141414";
-  let textColor = "#ededed";
-  let accentColor = "#e94560";
-
-  if (quote?.colorPalette) {
-    try {
-      const palette = JSON.parse(quote.colorPalette);
-      bgColor = palette[0] || bgColor;
-      accentColor = palette[1] || accentColor;
-      textColor = palette[2] || textColor;
-    } catch {
-      // use defaults
-    }
-  }
+  // Card palette (light defaults when quote is null or has no palette)
+  const paletteStyle = getCardPaletteStyle(quote ?? { colorPalette: null }, 0);
 
   // Load the font for the detail view
   useGoogleFont(quote?.fontPrimary);
@@ -135,20 +123,13 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
       />
       <div
         ref={overlayRef}
-        className="detail-overlay"
-        style={
-          {
-            backgroundColor: bgColor,
-            color: textColor,
-            "--accent": accentColor,
-          } as React.CSSProperties
-        }
+        className="detail-overlay bg-card-bg text-card-text"
+        style={paletteStyle}
         data-mood={quote?.mood || undefined}
       >
         <button
-          className="detail-overlay__close"
+          className="detail-overlay__close text-card-text"
           onClick={onClose}
-          style={{ color: textColor }}
         >
           &#x2715;
         </button>
@@ -167,11 +148,7 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
           </p>
 
           <div className="detail-overlay__meta">
-            <span
-              className="detail-overlay__attribution"
-              data-reveal
-              style={{ color: accentColor }}
-            >
+            <span className="detail-overlay__attribution text-card-accent" data-reveal>
               {quote?.attribution}
             </span>
             {quote?.socialHandles?.map((handle, i) => (
@@ -179,15 +156,15 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
                 key={i}
                 handle={handle}
                 size={16}
-                color={textColor}
+                color="var(--card-text)"
                 className="detail-overlay__handle"
               />
             ))}
             {quote?.mood && (
               <span
-                className="detail-overlay__mood-tag"
+                className="detail-overlay__mood-tag text-card-accent"
                 data-reveal
-                style={{ color: accentColor, borderColor: `${accentColor}44` }}
+                style={{ borderColor: "color-mix(in srgb, var(--card-accent) 27%, transparent)" }}
               >
                 {quote.mood}
               </span>

@@ -6,7 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BackToHome } from "@/components/BackToHome";
 import { BACKGROUNDS } from "@/lib/backgrounds";
-import { FONT_OPTIONS, PALETTE_PRESETS } from "@/lib/quote-presets";
+import { FONT_OPTIONS, PALETTE_PRESETS, getCardPaletteStyle } from "@/lib/quote-presets";
 import { SOCIAL_PLATFORMS } from "@/lib/social";
 import { cn } from "@/lib/cn";
 
@@ -405,8 +405,17 @@ export default function SubmitPage() {
           )}
 
           <div
-            className="relative z-10 mx-3 flex w-full max-w-97 flex-col justify-between gap-4 rounded-2xl bg-white p-4 min-h-52 max-lg:gap-3 max-lg:min-h-52 lg:mx-8 lg:min-h-69 lg:rounded-4xl lg:p-6"
+            className="relative z-10 mx-3 flex w-full max-w-97 flex-col justify-between gap-4 rounded-2xl bg-card-bg text-card-text p-4 min-h-52 max-lg:gap-3 max-lg:min-h-52 lg:mx-8 lg:min-h-69 lg:rounded-4xl lg:p-6"
             style={{
+              ...getCardPaletteStyle(
+                {
+                  colorPalette:
+                    selectedPalette !== null
+                      ? JSON.stringify(PALETTE_PRESETS[selectedPalette].colors)
+                      : null,
+                },
+                0,
+              ),
               fontFamily: fontPrimary
                 ? `"${fontPrimary}", serif`
                 : undefined,
@@ -420,14 +429,14 @@ export default function SubmitPage() {
                 placeholder="Your quotes will appear here..."
                 maxLength={500}
                 rows={1}
-                className="w-full bg-transparent scrollbar-hide border-0 outline-none resize-none text-lg font-medium leading-relaxed text-foreground placeholder:text-foreground/30 p-0 max-lg:text-base"
+                className="w-full bg-transparent scrollbar-hide border-0 outline-none resize-none text-lg font-medium leading-relaxed placeholder:text-card-muted/70 p-0 max-lg:text-base"
               />
               <input
                 value={attribution}
                 onChange={(e) => setAttribution(e.target.value)}
                 placeholder="Your name"
                 maxLength={100}
-                className="w-full bg-transparent border-0 outline-none text-sm text-foreground/50 placeholder:text-foreground/25 p-0"
+                className="w-full bg-transparent border-0 outline-none text-sm text-card-muted placeholder:text-card-muted/70 p-0"
               />
             </div>
           </div>

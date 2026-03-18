@@ -29,7 +29,7 @@ export const FONT_OPTIONS: FontOption[] = [
 ];
 
 // ─── Color palette presets ──────────────────────────────────────────────────
-// Format: [bg, accent, text, muted] — used for card background, accent, main text, muted text
+// Format: [bg, accent, text, muted] — light bg, dark text/muted for contrast (WCAG-friendly)
 
 export interface PalettePreset {
   name: string;
@@ -37,14 +37,14 @@ export interface PalettePreset {
 }
 
 export const PALETTE_PRESETS: PalettePreset[] = [
-  { name: "Slate", colors: ["#1a1a2e", "#e94560", "#f0f0f0", "#999999"] },
-  { name: "Ocean", colors: ["#0d1b2a", "#66d9ef", "#e0e1dd", "#415a77"] },
-  { name: "Earth", colors: ["#2d2d2d", "#f5c842", "#f5f5f0", "#8b7a3a"] },
-  { name: "Rose", colors: ["#1b1b2f", "#e43f5a", "#f0f0f0", "#7a7a9a"] },
-  { name: "Teal", colors: ["#0b0c10", "#66fcf1", "#e8e8e8", "#45a29e"] },
-  { name: "Berry", colors: ["#1a1a1a", "#ff6b6b", "#fefefe", "#c44569"] },
-  { name: "Violet", colors: ["#16213e", "#a78bfa", "#eef0ff", "#533483"] },
-  { name: "Coral", colors: ["#2c003e", "#d72631", "#f5f5f5", "#a2d5c6"] },
+  { name: "Slate", colors: ["#f5f5f5", "#c62828", "#1a1a1a", "#424242"] },
+  { name: "Ocean", colors: ["#e3f2fd", "#0277bd", "#0d47a1", "#455a64"] },
+  { name: "Earth", colors: ["#faf6f0", "#bf360c", "#3e2723", "#5d4037"] },
+  { name: "Rose", colors: ["#fce4ec", "#c2185b", "#880e4f", "#ad1457"] },
+  { name: "Teal", colors: ["#e0f2f1", "#00695c", "#004d40", "#00695c"] },
+  { name: "Berry", colors: ["#ffebee", "#b71c1c", "#1a1a1a", "#8e0038"] },
+  { name: "Violet", colors: ["#ede7f6", "#512da8", "#311b92", "#5e35b1"] },
+  { name: "Coral", colors: ["#fff3e0", "#e65100", "#bf360c", "#e65100"] },
 ];
 
 /** Raw color arrays for fallback when quote has no custom palette (same order as PALETTE_PRESETS). */
@@ -69,7 +69,7 @@ export function getPaletteForQuote(
   return DEFAULT_PALETTES[index % DEFAULT_PALETTES.length];
 }
 
-const CARD_PALETTE_FALLBACKS = ["#111111", "#e94560", "#f0f0f0", "#999999"] as const;
+const CARD_PALETTE_FALLBACKS = ["#f5f5f5", "#c62828", "#1a1a1a", "#424242"] as const;
 
 /**
  * Returns a React style object that sets card palette CSS variables for a quote.
