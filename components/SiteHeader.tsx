@@ -5,10 +5,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { useSession, signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
+import { useAuthModal } from "@/components/AuthModalProvider";
 
 // Re-usable base class for every dropdown nav item (Link + button)
 const navLinkBase =
-  "text-sm font-medium text-foreground no-underline bg-transparent" +
+  "text-sm font-medium text-foreground no-underline bg-transparent " +
   "cursor-pointer text-left font-[inherit] tracking-normal transition-colors " +
   "duration-150 leading-none";
 
@@ -42,6 +43,7 @@ export default function SiteHeader() {
   const { data: session, isPending } = useSession();
   const [isOpen, setIsOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const { openAuthModal } = useAuthModal();
 
   const user = session?.user;
   const admin = user?.role === "admin";
@@ -78,8 +80,9 @@ export default function SiteHeader() {
   const close = () => setIsOpen(false);
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-200 p-8 flex justify-end items-center pointer-events-none">
-      <div className="relative pointer-events-auto" ref={menuRef}>
+    <>
+      <header className="fixed top-0 left-0 right-0 z-200 p-8 flex justify-end items-center pointer-events-none">
+        <div className="relative pointer-events-auto" ref={menuRef}>
         {/* Hamburger toggle */}
         <button
           className="bg-transparent border-0 cursor-pointer text-foreground flex items-center leading-none"
@@ -137,20 +140,26 @@ export default function SiteHeader() {
 
                   {!user && (
                     <>
-                      <Link
-                        href="/login"
+                      <button
+                        type="button"
                         className={cn(navLinkBase)}
-                        onClick={close}
+                        onClick={() => {
+                          close();
+                          openAuthModal({ callbackURL: "/" });
+                        }}
                       >
                         Login
-                      </Link>
-                      <Link
-                        href="/login"
+                      </button>
+                      <button
+                        type="button"
                         className={cn(navLinkBase)}
-                        onClick={close}
+                        onClick={() => {
+                          close();
+                          openAuthModal({ callbackURL: "/" });
+                        }}
                       >
                         Create an Account
-                      </Link>
+                      </button>
                     </>
                   )}
                   <Link
@@ -221,7 +230,8 @@ export default function SiteHeader() {
             </button>
           </div>
         )}
-      </div>
-    </header>
+        </div>
+      </header>
+    </>
   );
 }

@@ -21,6 +21,8 @@ body::-webkit-scrollbar {
   --card-text: #1a1a1a;
   --card-muted: #999999;
   --border: #e0e0e0;
+  --input: #f5f5f5;
+  --input-border: #d5d5d5;
 }
 
 @theme inline {
@@ -33,6 +35,8 @@ body::-webkit-scrollbar {
   --color-card-text: var(--card-text);
   --color-card-muted: var(--card-muted);
   --color-border: var(--border);
+  --color-input: var(--input);
+  --color-input-border: var(--input-border);
   --container-8xl: 90rem;
 }
 

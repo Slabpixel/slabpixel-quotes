@@ -4,6 +4,7 @@ import "lenis/dist/lenis.css";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import LenisProvider from "@/components/LenisProvider";
+import { AuthModalProvider } from "@/components/AuthModalProvider";
 
 const switzer = localFont({
   src: "./Switzer-Variable.woff2",
@@ -24,10 +25,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${switzer.variable} antialiased`}>
+      <body className={`${switzer.variable} font-sans antialiased`}>
         <LenisProvider>
-          <SiteHeader />
-          {children}
+          <AuthModalProvider>
+            <SiteHeader />
+            {children}
+          </AuthModalProvider>
         </LenisProvider>
       </body>
     </html>
