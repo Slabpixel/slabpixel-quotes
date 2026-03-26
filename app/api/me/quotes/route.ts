@@ -10,6 +10,8 @@ const quoteSelectForMe = {
   attribution: true,
   socialHandles: true,
   authorPhoto: true,
+  backgroundId: true,
+  backgroundUrl: true,
   fontPrimary: true,
   fontSecondary: true,
   colorPalette: true,

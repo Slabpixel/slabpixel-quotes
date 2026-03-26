@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useRef } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import type { QuoteData } from "@/types/quote";
-import { getBackground } from "@/lib/backgrounds";
+import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { QuoteShareMenu } from "@/components/QuoteShareMenu";
 
@@ -31,8 +31,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
   const closeButtonRef = useRef<HTMLButtonElement | null>(null); // round X button only
   const tlRef = useRef<gsap.core.Timeline | null>(null);
 
-  // Compute background image / colors
-  const bg = getBackground(quote.backgroundId);
+  const bgResolved = resolveQuoteBackground(quote);
 
   // Opening: frame expands from feed rect to fullscreen; card stays centered in frame (flex) so it moves with it to viewport center
   useLayoutEffect(() => {
@@ -160,11 +159,11 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
       className="flex items-center justify-center relative bg-card-bg"
     >
       {/* Background image / overlay */}
-      {bg ? (
+      {bgResolved.type !== "none" ? (
         <>
           <Image
-            src={bg.src}
-            alt={bg.label}
+            src={bgResolved.src}
+            alt={bgResolved.label ?? "Quote background"}
             fill
             className="object-cover"
             sizes="100vw"
@@ -190,7 +189,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
           type="button"
           aria-label="Close"
           onClick={handleClose}
-          className="absolute -top-16 -right-16 z-10 h-11 w-11 shrink-0 rounded-full border-0 bg-white text-foreground shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex items-center justify-center cursor-pointer hover:bg-card-bg transition-colors invisible"
+          className="absolute -top-16 right-0 lg:-right-16 z-10 h-11 w-11 shrink-0 rounded-full border-0 bg-white text-foreground shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex items-center justify-center cursor-pointer hover:bg-card-bg transition-colors invisible"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
             <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -214,7 +213,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
               {quote.attribution}
             </cite>
           </div>
-          <div className="flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+          <div className="flex justify-end opacity-100 transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
             <QuoteShareMenu quote={quote} />
           </div>
         </div>

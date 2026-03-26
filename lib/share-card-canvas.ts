@@ -5,7 +5,7 @@
  */
 
 import type { QuoteData } from "@/types/quote";
-import { getBackground } from "@/lib/backgrounds";
+import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getPaletteForQuote } from "@/lib/quote-presets";
 import { FONT_OPTIONS } from "@/lib/quote-presets";
 import type { SharePlatform } from "@/lib/constants/share-platforms";
@@ -106,15 +106,21 @@ export async function generateShareCardBlob(
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas 2d not available");
 
-  const bg = getBackground(quote.backgroundId);
+  const bgResolved = resolveQuoteBackground(quote);
   const palette = getPaletteForQuote(quote, 0);
   const bgColor = palette[0] || "#111111";
 
   // 1) Background
   onProgress?.("background");
-  if (bg && origin) {
+  if (bgResolved.type !== "none") {
     try {
-      const img = await loadImage(`${origin}${bg.src}`);
+      const src =
+        bgResolved.type === "custom"
+          ? bgResolved.src
+          : origin
+            ? `${origin}${bgResolved.src}`
+            : bgResolved.src;
+      const img = await loadImage(src);
       // cover
       const scale = Math.max(w / img.width, h / img.height);
       const sw = img.width * scale;

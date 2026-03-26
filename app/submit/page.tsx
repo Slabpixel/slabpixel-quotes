@@ -1,16 +1,63 @@
 "use client";
 
-import { useState, useEffect, useRef, type FormEvent } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  type ChangeEvent,
+  type FormEvent,
+} from "react";
 import { useSession, signIn, signUp } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
 import { BackToHome } from "@/components/BackToHome";
 import { BACKGROUNDS } from "@/lib/backgrounds";
+import { resolveQuoteBackground } from "@/lib/quote-background";
 import { FONT_OPTIONS, PALETTE_PRESETS, getCardPaletteStyle } from "@/lib/quote-presets";
 import { SOCIAL_PLATFORMS } from "@/lib/social";
 import { cn } from "@/lib/cn";
 
 const DRAFT_KEY = "slabpixel-submit-draft";
+const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+const MAX_DIMENSION = 1920;
+const TARGET_OUTPUT_BYTES = 2 * 1024 * 1024;
+
+async function compressBackgroundImage(file: File): Promise<File> {
+  if (!file.type.startsWith("image/")) return file;
+
+  const bitmap = await createImageBitmap(file);
+  const scale = Math.min(1, MAX_DIMENSION / Math.max(bitmap.width, bitmap.height));
+  const width = Math.max(1, Math.round(bitmap.width * scale));
+  const height = Math.max(1, Math.round(bitmap.height * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    bitmap.close();
+    throw new Error("Image compression is not supported in this browser");
+  }
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close();
+
+  let quality = 0.86;
+  let blob: Blob | null = null;
+  for (let i = 0; i < 5; i++) {
+    blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/webp", quality),
+    );
+    if (!blob) break;
+    if (blob.size <= TARGET_OUTPUT_BYTES || quality <= 0.5) break;
+    quality -= 0.1;
+  }
+
+  if (!blob) return file;
+  const baseName = file.name.replace(/\.[^/.]+$/, "");
+  return new File([blob], `${baseName || "background"}.webp`, {
+    type: "image/webp",
+  });
+}
 
 // ── Login Modal ──────────────────────────────────────────────
 
@@ -217,6 +264,10 @@ export default function SubmitPage() {
   const [selectedBackground, setSelectedBackground] = useState<string | null>(
     null,
   );
+  const [backgroundUploadUrl, setBackgroundUploadUrl] = useState<string | null>(
+    null,
+  );
+  const [backgroundUploading, setBackgroundUploading] = useState(false);
   const [socialHandles, setSocialHandles] = useState<Record<string, string>>(
     () =>
       Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, ""])),
@@ -228,6 +279,7 @@ export default function SubmitPage() {
   const [error, setError] = useState<string | null>(null);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const backgroundFileInputRef = useRef<HTMLInputElement>(null);
   const didAutoFill = useRef(false);
 
   // Auto-fill attribution from session
@@ -251,6 +303,8 @@ export default function SubmitPage() {
           setSelectedPalette(draft.selectedPalette);
         if (draft.selectedBackground)
           setSelectedBackground(draft.selectedBackground);
+        if (draft.backgroundUploadUrl)
+          setBackgroundUploadUrl(draft.backgroundUploadUrl);
         if (draft.socialHandles) setSocialHandles(draft.socialHandles);
         didAutoFill.current = true;
       } catch {
@@ -291,10 +345,60 @@ export default function SubmitPage() {
         fontPrimary,
         selectedPalette,
         selectedBackground,
+        backgroundUploadUrl,
         socialHandles,
       }),
     );
     signIn.social({ provider: "google", callbackURL: "/submit" });
+  };
+
+  const handleBackgroundFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+
+    if (file.size > MAX_UPLOAD_BYTES) {
+      setError("Image must be 5MB or smaller before upload.");
+      return;
+    }
+
+    if (!session) {
+      setShowLoginModal(true);
+      setError("Sign in to upload a custom background.");
+      return;
+    }
+
+    setBackgroundUploading(true);
+    setError(null);
+    try {
+      const prepared = await compressBackgroundImage(file);
+      if (prepared.size > MAX_UPLOAD_BYTES) {
+        throw new Error(
+          "Image is still too large after compression. Please choose a smaller image.",
+        );
+      }
+      const fd = new FormData();
+      fd.append("file", prepared);
+      const res = await fetch("/api/uploads/background", {
+        method: "POST",
+        body: fd,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(
+          typeof data.error === "string" ? data.error : "Upload failed",
+        );
+      }
+      if (typeof data.url !== "string") {
+        throw new Error("Invalid upload response");
+      }
+      setSelectedBackground(null);
+      setBackgroundUploadUrl(data.url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      setBackgroundUploading(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -330,6 +434,7 @@ export default function SubmitPage() {
               ? JSON.stringify(PALETTE_PRESETS[selectedPalette].colors)
               : null,
           backgroundId: selectedBackground,
+          backgroundUrl: backgroundUploadUrl,
         }),
       });
 
@@ -346,9 +451,10 @@ export default function SubmitPage() {
     }
   };
 
-  const bg = selectedBackground
-    ? BACKGROUNDS.find((b) => b.id === selectedBackground)
-    : null;
+  const bgPreview = resolveQuoteBackground({
+    backgroundUrl: backgroundUploadUrl,
+    backgroundId: selectedBackground,
+  });
 
   if (isSubmitted) {
     return (
@@ -389,11 +495,11 @@ export default function SubmitPage() {
       {/* ── Left (desktop) / Top (mobile): Sticky Preview ───────────────────── */}
       <div className="sticky top-0 z-10 h-[calc(42vh+4rem)] min-h-[320px] w-full shrink-0 overflow-hidden bg-background p-2 pt-16 lg:h-screen lg:min-h-0 lg:w-1/2 lg:pt-2">
         <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl lg:rounded-4xl">
-          {bg ? (
+          {bgPreview.type !== "none" ? (
             <>
               <Image
-                src={bg.src}
-                alt={bg.label}
+                src={bgPreview.src}
+                alt={bgPreview.label ?? "Background"}
                 fill
                 className="object-cover"
                 sizes="(max-width: 1024px) 100vw, 50vw"
@@ -527,19 +633,56 @@ export default function SubmitPage() {
             <h3 className="text-sm text-foreground/40 mb-4">
               Background Theme
             </h3>
+            <input
+              ref={backgroundFileInputRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleBackgroundFile}
+            />
+            <div className="flex flex-wrap gap-2 mb-4">
+              <button
+                type="button"
+                disabled={backgroundUploading}
+                onClick={() => backgroundFileInputRef.current?.click()}
+                className={cn(
+                  "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
+                  backgroundUploadUrl
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-foreground hover:border-foreground/30",
+                  backgroundUploading && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                {backgroundUploading
+                  ? "Uploading…"
+                  : backgroundUploadUrl
+                    ? "Custom image selected"
+                    : "Upload your own"}
+              </button>
+              {backgroundUploadUrl && (
+                <button
+                  type="button"
+                  onClick={() => setBackgroundUploadUrl(null)}
+                  className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
+                >
+                  Remove upload
+                </button>
+              )}
+            </div>
             <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
               {BACKGROUNDS.map((b) => (
                 <button
                   key={b.id}
                   type="button"
-                  onClick={() =>
+                  onClick={() => {
+                    setBackgroundUploadUrl(null);
                     setSelectedBackground(
                       selectedBackground === b.id ? null : b.id,
-                    )
-                  }
+                    );
+                  }}
                   className={cn(
                     "aspect-square rounded-xl border-2 overflow-hidden bg-[#f5f5f5] transition-all cursor-pointer relative",
-                    selectedBackground === b.id
+                    selectedBackground === b.id && !backgroundUploadUrl
                       ? "border-foreground"
                       : "border-transparent hover:border-foreground/20",
                   )}

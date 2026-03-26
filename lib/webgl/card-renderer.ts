@@ -100,6 +100,16 @@ function roundRect(
   ctx.closePath();
 }
 
+function loadBackgroundImage(src: string): Promise<HTMLImageElement> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error("Background image failed to load"));
+    img.src = src;
+  });
+}
+
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -143,10 +153,35 @@ export async function renderCardToCanvas(
   const textColor = palette[2] || "#f0f0f0";
   const mutedColor = palette[3] || "#999999";
 
-  // Background with rounded corners
+  const customBg = quote.backgroundUrl?.trim();
+  ctx.save();
   roundRect(ctx, 0, 0, CARD_WIDTH, CARD_HEIGHT, CARD_RADIUS);
-  ctx.fillStyle = bgColor;
-  ctx.fill();
+  ctx.clip();
+  if (customBg) {
+    try {
+      const img = await loadBackgroundImage(customBg);
+      const scale = Math.max(
+        CARD_WIDTH / img.width,
+        CARD_HEIGHT / img.height,
+      );
+      const dw = img.width * scale;
+      const dh = img.height * scale;
+      ctx.drawImage(
+        img,
+        (CARD_WIDTH - dw) / 2,
+        (CARD_HEIGHT - dh) / 2,
+        dw,
+        dh,
+      );
+    } catch {
+      ctx.fillStyle = bgColor;
+      ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+    }
+  } else {
+    ctx.fillStyle = bgColor;
+    ctx.fillRect(0, 0, CARD_WIDTH, CARD_HEIGHT);
+  }
+  ctx.restore();
 
   // Subtle gradient overlay
   const grad = ctx.createRadialGradient(

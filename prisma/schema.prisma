@@ -101,7 +101,8 @@ model Quote {
   mood          String? // e.g. "melancholy", "bold", "serene"
 
   // Card visuals
-  backgroundId String? // key referencing a preset background from lib/backgrounds.ts
+  backgroundId  String? // key referencing a preset background from lib/backgrounds.ts
+  backgroundUrl String? @db.Text // user-uploaded background (Vercel Blob); takes precedence over backgroundId when set
 
   // Curation
   status    QuoteStatus @default(PENDING)

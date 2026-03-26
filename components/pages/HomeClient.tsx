@@ -7,7 +7,7 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { type QuoteData } from "@/types/quote";
-import { getBackground } from "@/lib/backgrounds";
+import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { PLACEHOLDER_QUOTES_FEED } from "@/lib/placeholder-quotes";
 import { cn } from "@/lib/cn";
@@ -130,7 +130,7 @@ function FeedItem({
   const today = isToday(quote.publishedAt);
   const avatarSrc = resolveAvatar(quote.submitter);
   const submitterName = quote.submitter?.name ?? "Anonymous";
-  const bg = getBackground(quote.backgroundId);
+  const bgResolved = resolveQuoteBackground(quote);
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const whiteCardRef = useRef<HTMLDivElement | null>(null);
@@ -169,12 +169,12 @@ function FeedItem({
         className={cn(
           "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8 cursor-pointer",
           "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-19",
-          bg ? "" : "bg-[#ebebeb]",
+          bgResolved.type !== "none" ? "" : "bg-[#ebebeb]",
         )}
         style={
-          bg
+          bgResolved.type !== "none"
             ? {
-              backgroundImage: `url(${bg.src})`,
+              backgroundImage: `url(${bgResolved.src})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
@@ -182,7 +182,7 @@ function FeedItem({
         }
       >
         {/* Overlay only when a background image is set */}
-        {bg && (
+        {bgResolved.type !== "none" && (
           <div className="absolute inset-0 bg-black/22 rounded-[inherit] z-0" />
         )}
 

@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { useGoogleFont } from "@/lib/use-google-font";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
+import { QuoteShareMenu } from "@/components/QuoteShareMenu";
 import SocialIcon from "./SocialIcon";
 
 interface DetailOverlayProps {
@@ -123,7 +124,7 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
       />
       <div
         ref={overlayRef}
-        className="detail-overlay bg-card-bg text-card-text"
+        className="detail-overlay group bg-card-bg text-card-text"
         style={paletteStyle}
         data-mood={quote?.mood || undefined}
       >
@@ -170,6 +171,11 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
               </span>
             )}
           </div>
+          {quote && (
+            <div className="mt-4 flex justify-end opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100">
+              <QuoteShareMenu quote={quote} />
+            </div>
+          )}
         </div>
       </div>
     </>

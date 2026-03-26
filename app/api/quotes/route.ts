@@ -66,6 +66,9 @@ export async function POST(request: NextRequest) {
 
   const data = result.data;
 
+  const backgroundUrl =
+    data.backgroundUrl?.trim() ? data.backgroundUrl.trim() : null;
+
   const quote = await prisma.quote.create({
     data: {
       text: data.text,
@@ -77,6 +80,7 @@ export async function POST(request: NextRequest) {
       colorPalette: data.colorPalette ?? null,
       mood: data.mood ?? null,
       backgroundId: data.backgroundId ?? null,
+      backgroundUrl,
       submitterId: session?.user?.id ?? null,
       status: "PENDING",
     },

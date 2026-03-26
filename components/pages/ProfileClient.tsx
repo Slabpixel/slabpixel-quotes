@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { QuoteData } from "@/types/quote";
 import type { PublicProfile } from "@/types/profile";
-import { getBackground } from "@/lib/backgrounds";
+import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { cn } from "@/lib/cn";
 import SiteHeader from "@/components/SiteHeader";
@@ -251,7 +251,7 @@ function ProfileQuoteCard({
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
-  const bg = getBackground(quote.backgroundId);
+  const bgResolved = resolveQuoteBackground(quote);
 
   const handleClick = () => {
     if (!containerRef.current || !cardRef.current) return;
@@ -274,20 +274,22 @@ function ProfileQuoteCard({
       }}
       className={cn(
         "aspect-3/4 rounded-xl overflow-hidden cursor-pointer relative group",
-        !bg && "bg-card-bg",
+        bgResolved.type === "none" && "bg-card-bg",
       )}
       style={{
         ...getCardPaletteStyle(quote, 0),
-        ...(bg
+        ...(bgResolved.type !== "none"
           ? {
-              backgroundImage: `url(${bg.src})`,
+              backgroundImage: `url(${bgResolved.src})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
           : null),
       }}
     >
-      {bg && <div className="absolute inset-0 bg-black/25" />}
+      {bgResolved.type !== "none" && (
+        <div className="absolute inset-0 bg-black/25" />
+      )}
       <div className="absolute inset-2 flex items-center justify-center">
         <div
           ref={cardRef}

@@ -5,6 +5,8 @@ export interface QuoteData {
   socialHandles: string[];
   authorPhoto: string | null;
   backgroundId: string | null;
+  /** User-uploaded background (e.g. Vercel Blob); takes precedence over backgroundId when set */
+  backgroundUrl: string | null;
   fontPrimary: string | null;
   fontSecondary: string | null;
   colorPalette: string | null;

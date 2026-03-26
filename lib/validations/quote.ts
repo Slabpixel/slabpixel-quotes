@@ -20,6 +20,13 @@ export const submitQuoteSchema = z.object({
   colorPalette: z.string().max(500).optional().nullable(),
   mood: z.string().max(50).optional().nullable(),
   backgroundId: z.string().max(100).optional().nullable(),
+  backgroundUrl: z
+    .string()
+    .max(2048)
+    .url()
+    .refine((u) => u.startsWith("https://"), "Background URL must be HTTPS")
+    .optional()
+    .nullable(),
 });
 
 export const updateQuoteStatusSchema = z.object({
