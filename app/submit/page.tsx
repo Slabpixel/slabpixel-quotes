@@ -419,7 +419,7 @@ export default function SubmitPage() {
               <input
                 value={attribution}
                 readOnly
-                placeholder="Your name"
+                placeholder={session?.user?.name ?? "Name"}
                 maxLength={100}
                 className="w-full bg-transparent border-0 outline-none text-sm text-card-muted placeholder:text-card-muted/70 p-0"
               />

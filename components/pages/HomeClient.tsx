@@ -43,7 +43,8 @@ function buildInfiniteMonths(centerMonth: string, radius = 6) {
   const centerIndex = Math.max(0, MONTHS.indexOf(centerMonth));
   const out: { value: string; offset: number }[] = [];
   for (let i = -radius; i <= radius; i++) {
-    const idx = (centerIndex + i + MONTHS.length * 10) % MONTHS.length;
+    // Newer month appears above; older month appears below (e.g. Mar -> Feb -> Jan).
+    const idx = (centerIndex - i + MONTHS.length * 10) % MONTHS.length;
     out.push({ value: MONTHS[idx], offset: i });
   }
   return out;
@@ -430,7 +431,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
       gsap.killTweensOf(monthRailRef.current);
       gsap.fromTo(
         monthRailRef.current,
-        { y: -scrollDirection * (monthStepPx || 38) },
+        { y: scrollDirection * (monthStepPx || 38) },
         {
           y: 0,
           duration: 1,
@@ -442,7 +443,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
       gsap.killTweensOf(yearRailRef.current);
       gsap.fromTo(
         yearRailRef.current,
-        { y: -scrollDirection * (yearStepPx || 24) },
+        { y: scrollDirection * (yearStepPx || 24) },
         {
           y: 0,
           duration: 1,
