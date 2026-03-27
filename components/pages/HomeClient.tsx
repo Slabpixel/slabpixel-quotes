@@ -222,7 +222,7 @@ function FeedItem({
             }
             : bgResolved.type === "solid"
               ? { backgroundColor: bgResolved.color }
-            : undefined
+              : undefined
         }
       >
         {/* Overlay only when a background image is set */}

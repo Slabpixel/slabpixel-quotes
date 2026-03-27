@@ -270,7 +270,7 @@ export default function SubmitPage() {
       setFieldErrors(nextFieldErrors);
       setError(
         parsed.error.issues[0]?.message ??
-          "Please fix the highlighted fields and try again.",
+        "Please fix the highlighted fields and try again.",
       );
       return;
     }
@@ -306,7 +306,7 @@ export default function SubmitPage() {
         }
         throw new Error(
           data?.error ||
-            "Failed to submit quote. Please check the form and try again.",
+          "Failed to submit quote. Please check the form and try again.",
         );
       }
 
@@ -548,33 +548,33 @@ export default function SubmitPage() {
             />
             {backgroundTab === "upload" && (
               <div className="flex flex-wrap gap-2 mb-4">
-              <button
-                type="button"
-                disabled={backgroundUploading}
-                onClick={() => backgroundFileInputRef.current?.click()}
-                className={cn(
-                  "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
-                  backgroundUploadUrl
-                    ? "border-foreground bg-foreground text-background"
-                    : "border-border text-foreground hover:border-foreground/30",
-                  backgroundUploading && "opacity-50 cursor-not-allowed",
-                )}
-              >
-                {backgroundUploading
-                  ? "Uploading…"
-                  : backgroundUploadUrl
-                    ? "Custom image selected"
-                    : "Upload your own"}
-              </button>
-              {backgroundUploadUrl && (
                 <button
                   type="button"
-                  onClick={() => setBackgroundUploadUrl(null)}
-                  className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
+                  disabled={backgroundUploading}
+                  onClick={() => backgroundFileInputRef.current?.click()}
+                  className={cn(
+                    "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
+                    backgroundUploadUrl
+                      ? "border-foreground bg-foreground text-background"
+                      : "border-border text-foreground hover:border-foreground/30",
+                    backgroundUploading && "opacity-50 cursor-not-allowed",
+                  )}
                 >
-                  Remove upload
+                  {backgroundUploading
+                    ? "Uploading…"
+                    : backgroundUploadUrl
+                      ? "Custom image selected"
+                      : "Upload your own"}
                 </button>
-              )}
+                {backgroundUploadUrl && (
+                  <button
+                    type="button"
+                    onClick={() => setBackgroundUploadUrl(null)}
+                    className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
+                  >
+                    Remove upload
+                  </button>
+                )}
               </div>
             )}
             {backgroundTab === "solid" && (
@@ -603,30 +603,30 @@ export default function SubmitPage() {
             {backgroundTab === "image" && (
               <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
                 {imageBackgrounds.map((b) => (
-                <button
-                  key={b.id}
-                  type="button"
-                  onClick={() => {
-                    setBackgroundUploadUrl(null);
-                    setSelectedBackground(
-                      selectedBackground === b.id ? null : b.id,
-                    );
-                  }}
-                  className={cn(
-                    "aspect-square rounded-xl border-2 overflow-hidden bg-[#f5f5f5] transition-all cursor-pointer relative",
-                    selectedBackground === b.id && !backgroundUploadUrl
-                      ? "border-foreground"
-                      : "border-transparent hover:border-foreground/20",
-                  )}
-                >
-                  <Image
-                    src={b.src ?? "/backgrounds/abstract-01.jpg"}
-                    alt={b.label}
-                    fill
-                    className="object-cover"
-                    sizes="80px"
-                  />
-                </button>
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setBackgroundUploadUrl(null);
+                      setSelectedBackground(
+                        selectedBackground === b.id ? null : b.id,
+                      );
+                    }}
+                    className={cn(
+                      "aspect-square rounded-xl border-2 overflow-hidden bg-[#f5f5f5] transition-all cursor-pointer relative",
+                      selectedBackground === b.id && !backgroundUploadUrl
+                        ? "border-foreground"
+                        : "border-transparent hover:border-foreground/20",
+                    )}
+                  >
+                    <Image
+                      src={b.src ?? "/backgrounds/abstract-01.jpg"}
+                      alt={b.label}
+                      fill
+                      className="object-cover"
+                      sizes="80px"
+                    />
+                  </button>
                 ))}
               </div>
             )}
