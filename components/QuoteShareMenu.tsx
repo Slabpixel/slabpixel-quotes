@@ -16,6 +16,26 @@ interface QuoteShareMenuProps {
   quote: QuoteData;
 }
 
+function buildShareUrl(
+  platform: SharePlatform,
+  text: string,
+  canonicalUrl: string,
+): string | null {
+  const encodedText = encodeURIComponent(text);
+  const encodedUrl = encodeURIComponent(canonicalUrl);
+
+  if (platform === "twitter") {
+    return `https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`;
+  }
+  if (platform === "linkedin") {
+    return `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+  }
+  if (platform === "facebook") {
+    return `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}&quote=${encodedText}`;
+  }
+  return null;
+}
+
 export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
@@ -83,6 +103,12 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
       const file = new File([shareBlob], `quote-${currentPlatform}.png`, {
         type: "image/png",
       });
+      const origin =
+        typeof window !== "undefined" ? window.location.origin : "";
+      const canonicalUrl = quote.submitter?.id
+        ? `${origin}/profile/${quote.submitter.id}`
+        : origin || "https://slabpixel.com";
+      const shareText = `"${quote.text}" — ${quote.attribution}`;
 
       if (
         typeof navigator !== "undefined" &&
@@ -91,9 +117,21 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
       ) {
         await navigator.share({
           title: quote.attribution,
-          text: quote.text,
+          text: shareText,
+          url: canonicalUrl,
           files: [file],
         });
+        return;
+      }
+
+      const platformShareUrl = buildShareUrl(
+        currentPlatform,
+        shareText,
+        canonicalUrl,
+      );
+      if (platformShareUrl && typeof window !== "undefined") {
+        window.open(platformShareUrl, "_blank", "noopener,noreferrer");
+        return;
       } else {
         const url = URL.createObjectURL(shareBlob);
         const a = document.createElement("a");
@@ -245,7 +283,10 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
                     disabled={status === "loading"}
                     className="inline-flex items-center justify-center rounded-full bg-black px-4 py-2 text-xs font-medium text-white hover:bg-black/90 disabled:opacity-60"
                   >
-                    Share now
+                    {currentPlatform === "instagramPost" ||
+                    currentPlatform === "instagramStory"
+                      ? "Share / Download"
+                      : "Share now"}
                   </button>
                   <button
                     type="button"

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, type ChangeEvent } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import type { QuoteData } from "@/types/quote";
@@ -60,9 +60,12 @@ export default function ProfileClient({
   isOwnProfile,
 }: ProfileClientProps) {
   const router = useRouter();
+  const [name, setName] = useState(profile.name);
   const [bio, setBio] = useState(profile.bio ?? "");
+  const [profilePhoto, setProfilePhoto] = useState(profile.profilePhoto ?? profile.image ?? null);
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [savingBio, setSavingBio] = useState(false);
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
   const [selected, setSelected] = useState<{
     quote: QuoteData;
@@ -70,18 +73,17 @@ export default function ProfileClient({
     cardRect: { top: number; left: number; width: number; height: number };
   } | null>(null);
 
-  const profileUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/profile/${profile.id}`
-      : "";
-
-  const handleSaveBio = async () => {
+  const handleSaveProfile = async () => {
     setSavingBio(true);
     try {
       const res = await fetch("/api/me/profile", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ bio: bio.trim() || null }),
+        body: JSON.stringify({
+          name: name.trim(),
+          bio: bio.trim() || null,
+          profilePhoto,
+        }),
       });
       if (res.ok) {
         setIsEditingBio(false);
@@ -89,6 +91,30 @@ export default function ProfileClient({
       }
     } finally {
       setSavingBio(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setUploadingPhoto(true);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const res = await fetch("/api/uploads/profile-photo", {
+        method: "POST",
+        body: form,
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || typeof data.url !== "string") {
+        throw new Error(typeof data.error === "string" ? data.error : "Upload failed");
+      }
+      setProfilePhoto(data.url);
+    } catch {
+      // Keep UI simple for now: user can retry.
+    } finally {
+      setUploadingPhoto(false);
     }
   };
 
@@ -110,7 +136,7 @@ export default function ProfileClient({
     setTimeout(() => setShareCopied(false), 2000);
   };
 
-  const avatarSrc = profile.profilePhoto ?? profile.image ?? null;
+  const avatarSrc = profilePhoto;
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -122,7 +148,7 @@ export default function ProfileClient({
         <div className="flex flex-col items-center text-center mb-12 max-md:mb-10">
           <ProfileAvatar src={avatarSrc} name={profile.name} size={120} />
           <h1 className="text-2xl font-semibold mt-6 tracking-tight">
-            {profile.name}
+            {isEditingBio ? name : profile.name}
           </h1>
 
           {/* Bio */}
@@ -138,10 +164,41 @@ export default function ProfileClient({
                   className="w-full px-4 py-3 rounded-xl border border-border bg-background text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-foreground/20"
                 />
                 <div className="flex gap-2 justify-center">
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="Your name"
+                    maxLength={100}
+                    className="w-full px-4 py-2 rounded-xl border border-border bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-foreground/20"
+                  />
+                </div>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <label className="px-4 py-2 text-sm font-medium text-foreground rounded-full border border-border cursor-pointer">
+                    {uploadingPhoto ? "Uploading..." : "Upload photo"}
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      className="hidden"
+                      onChange={handlePhotoUpload}
+                    />
+                  </label>
+                  {profilePhoto && (
+                    <button
+                      type="button"
+                      onClick={() => setProfilePhoto(null)}
+                      className="px-4 py-2 text-sm font-medium text-foreground/70 hover:text-foreground rounded-full border border-border"
+                    >
+                      Remove photo
+                    </button>
+                  )}
+                </div>
+                <div className="flex gap-2 justify-center">
                   <button
                     type="button"
                     onClick={() => {
+                      setName(profile.name);
                       setBio(profile.bio ?? "");
+                      setProfilePhoto(profile.profilePhoto ?? profile.image ?? null);
                       setIsEditingBio(false);
                     }}
                     className="px-4 py-2 text-sm font-medium text-foreground/70 hover:text-foreground rounded-full border border-border"
@@ -150,7 +207,7 @@ export default function ProfileClient({
                   </button>
                   <button
                     type="button"
-                    onClick={handleSaveBio}
+                    onClick={handleSaveProfile}
                     disabled={savingBio}
                     className="px-4 py-2 text-sm font-medium text-white bg-foreground rounded-full hover:opacity-90 disabled:opacity-60"
                   >
@@ -278,16 +335,20 @@ function ProfileQuoteCard({
       )}
       style={{
         ...getCardPaletteStyle(quote, 0),
-        ...(bgResolved.type !== "none"
+        ...(bgResolved.type === "preset" || bgResolved.type === "custom"
           ? {
               backgroundImage: `url(${bgResolved.src})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
+          : bgResolved.type === "solid"
+            ? {
+                backgroundColor: bgResolved.color,
+              }
           : null),
       }}
     >
-      {bgResolved.type !== "none" && (
+      {(bgResolved.type === "preset" || bgResolved.type === "custom") && (
         <div className="absolute inset-0 bg-black/25" />
       )}
       <div className="absolute inset-2 flex items-center justify-center">

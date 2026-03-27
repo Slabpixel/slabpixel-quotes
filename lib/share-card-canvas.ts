@@ -112,7 +112,7 @@ export async function generateShareCardBlob(
 
   // 1) Background
   onProgress?.("background");
-  if (bgResolved.type !== "none") {
+  if (bgResolved.type === "preset" || bgResolved.type === "custom") {
     try {
       const src =
         bgResolved.type === "custom"
@@ -130,6 +130,9 @@ export async function generateShareCardBlob(
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, w, h);
     }
+  } else if (bgResolved.type === "solid") {
+    ctx.fillStyle = bgResolved.color;
+    ctx.fillRect(0, 0, w, h);
   } else {
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, w, h);
@@ -145,12 +148,10 @@ export async function generateShareCardBlob(
     : "system-ui, serif";
 
   // 2) White card — match site: rounded-4xl (32), centered, max width ~60% of canvas
-  const cardPadding = Math.round(0.04 * Math.min(w, h));
   const cardRadius = 32;
   const cardMaxWidth = Math.min(w * 0.65, 720);
   const cardWidth = cardMaxWidth;
   const cardX = (w - cardWidth) / 2;
-  const cardY = (h - 0) / 2; // will adjust after measuring content
   const innerPad = Math.round(24 * (Math.min(w, h) / 600));
   const quoteFontSize = Math.round(22 * (Math.min(w, h) / 600));
   const attrFontSize = Math.round(14 * (Math.min(w, h) / 600));

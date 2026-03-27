@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
   const quote = await prisma.quote.create({
     data: {
       text: data.text,
-      attribution: data.attribution,
+      attribution: session?.user?.name?.trim() || data.attribution,
       socialHandles: data.socialHandles?.length ? data.socialHandles : [],
       authorPhoto: data.authorPhoto ?? null,
       fontPrimary: data.fontPrimary ?? null,

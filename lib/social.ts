@@ -119,25 +119,25 @@ export interface SocialPlatformConfig {
 export const SOCIAL_PLATFORMS: readonly SocialPlatformConfig[] = [
   {
     key: "instagram",
-    placeholder: "@yourusername",
+    placeholder: "username",
     urlPrefix: "https://www.instagram.com/",
     iconPath: SVG_PATHS.instagram ?? "",
   },
   {
     key: "twitter",
-    placeholder: "@yourusername",
+    placeholder: "username",
     urlPrefix: "https://x.com/",
     iconPath: SVG_PATHS.twitter ?? "",
   },
   {
     key: "facebook",
-    placeholder: "@yourusername",
+    placeholder: "username",
     urlPrefix: "https://www.facebook.com/",
     iconPath: SVG_PATHS.facebook ?? "",
   },
   {
     key: "tiktok",
-    placeholder: "@yourusername",
+    placeholder: "username",
     urlPrefix: "https://www.tiktok.com/@",
     iconPath: SVG_PATHS.tiktok ?? "",
   },

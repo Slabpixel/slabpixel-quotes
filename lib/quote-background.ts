@@ -3,6 +3,7 @@ import { getBackground } from "@/lib/backgrounds";
 export type ResolvedQuoteBackground =
   | { type: "custom"; src: string; label?: string }
   | { type: "preset"; src: string; label: string }
+  | { type: "solid"; color: string; label: string }
   | { type: "none" };
 
 /**
@@ -19,7 +20,12 @@ export function resolveQuoteBackground(quote: {
   }
   const preset = getBackground(quote.backgroundId ?? null);
   if (preset) {
-    return { type: "preset", src: preset.src, label: preset.label };
+    if (preset.type === "solid" && preset.color) {
+      return { type: "solid", color: preset.color, label: preset.label };
+    }
+    if (preset.src) {
+      return { type: "preset", src: preset.src, label: preset.label };
+    }
   }
   return { type: "none" };
 }

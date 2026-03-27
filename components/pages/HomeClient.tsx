@@ -1,11 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useGSAP } from "@gsap/react";
 import { type QuoteData } from "@/types/quote";
 import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
@@ -15,22 +13,59 @@ import { useLenis } from "lenis/react";
 import QuoteOverlay from "@/components/QuoteOverlay";
 import { QuoteShareMenu } from "@/components/QuoteShareMenu";
 
-gsap.registerPlugin(useGSAP, ScrollTrigger);
-
-
 // ── Helpers ────────────────────────────────────────────────────────────────
 function formatDate(iso: string | null) {
-  if (!iso) return { day: "—", year: "" };
+  if (!iso) return { day: "—", month: "Unknown", year: "Unknown" };
   const d = new Date(iso);
   return {
-    day: d.toLocaleDateString("en-US", { month: "long", day: "numeric" }),
+    day: String(d.getDate()),
+    month: d.toLocaleDateString("en-US", { month: "long" }),
     year: String(d.getFullYear()),
   };
 }
 
-function isToday(iso: string | null): boolean {
-  if (!iso) return false;
-  return new Date(iso).toDateString() === new Date().toDateString();
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+function buildInfiniteMonths(centerMonth: string, radius = 6) {
+  const centerIndex = Math.max(0, MONTHS.indexOf(centerMonth));
+  const out: { value: string; offset: number }[] = [];
+  for (let i = -radius; i <= radius; i++) {
+    const idx = (centerIndex + i + MONTHS.length * 10) % MONTHS.length;
+    out.push({ value: MONTHS[idx], offset: i });
+  }
+  return out;
+}
+
+function buildInfiniteYears(centerYear: string, radius = 7) {
+  const parsed = Number.parseInt(centerYear, 10);
+  const center = Number.isNaN(parsed) ? new Date().getFullYear() : parsed;
+  const out: { value: string; offset: number }[] = [];
+  for (let i = -radius; i <= radius; i++) {
+    // Newest/biggest years appear toward the top.
+    out.push({ value: String(center - i), offset: i });
+  }
+  return out;
+}
+
+function getRailStepPx(railEl: HTMLDivElement | null): number {
+  if (!railEl) return 0;
+  const center = railEl.querySelector<HTMLElement>('[data-offset="0"]');
+  const neighbor = railEl.querySelector<HTMLElement>('[data-offset="1"]');
+  if (!center || !neighbor) return 0;
+  return Math.abs(neighbor.offsetTop - center.offsetTop);
 }
 
 function resolveAvatar(submitter: QuoteData["submitter"]): string | null {
@@ -78,13 +113,18 @@ function Avatar({
 }
 
 // ── Submit CTA card — first child of the feed list ────────────────────────
-function SubmitCard({ total }: { total: number }) {
+function SubmitCard() {
   return (
-    <div className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] gap-8 items-center max-lg:grid-cols-[1fr]">
+    <div className="relative grid grid-cols-[1fr_1fr_6fr_1fr_1fr] gap-8 items-center max-lg:grid-cols-[1fr]">
+      <div
+        aria-hidden="true"
+        className="max-lg:hidden absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-muted"
+        style={{ left: "20.5%" }}
+      />
       {/* Col 1: empty */}
       <div aria-hidden="true" className="max-lg:hidden" />
 
-      {/* Col 2: top dot */}
+      {/* Col 2: empty */}
       <div aria-hidden="true" className="max-lg:hidden" />
 
       {/* Col 3: CTA card */}
@@ -117,17 +157,20 @@ function FeedItem({
   index,
   total,
   isSelected,
+  isActive,
+  onRegister,
   onSelect,
 }: {
   quote: QuoteData;
   index: number;
   total: number;
   isSelected?: boolean;
+  isActive?: boolean;
+  onRegister: (index: number, el: HTMLDivElement | null) => void;
   onSelect: (payload: { quote: QuoteData; rect: DOMRect; cardRect: DOMRect }) => void;
 }) {
   const no = total - index;
   const date = formatDate(quote.publishedAt);
-  const today = isToday(quote.publishedAt);
   const avatarSrc = resolveAvatar(quote.submitter);
   const submitterName = quote.submitter?.name ?? "Anonymous";
   const bgResolved = resolveQuoteBackground(quote);
@@ -144,45 +187,45 @@ function FeedItem({
 
   return (
     <article className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] items-center min-h-110 gap-8 max-lg:grid-cols-[1fr] max-lg:grid-rows-[auto] max-lg:min-h-0 max-lg:gap-2">
-      {/* ── 1 · Index number ─────────────────────────── */}
+      {/* ── 1  ─────────────────────────── */}
       <div className="max-lg:hidden flex flex-col items-end leading-[1.1] select-none max-lg:row-start-1 max-lg:col-start-1 max-lg:items-start max-lg:pr-0">
-        <span className="text-sm">
-          No.
-        </span>
-        <span className="text-sm text-foreground">
-          {no}
-        </span>
       </div>
 
-      {/* ── 2 · Timeline column ───────────────────────── */}
+      {/* ── 2 ───────────────────────── */}
       <div className="relative h-full flex items-center justify-end max-lg:hidden">
-        <div className="flex flex-col items-end text-sm py-4 leading-none select-none bg-white">
-          <span>{date.day}</span>
-          <span>{date.year}</span>
+        <div className="flex items-start w-full justify-end text-sm mr-5 leading-none select-none">
+          <span className={cn(isActive ? "text-foreground" : "text-foreground/20")}>
+            {date.day}
+          </span>
         </div>
       </div>
 
-      {/* ── 3 · Card ──────────────────────────────────── */}
+      {/* ── 3 ──────────────────────────────────── */}
       <div
-        ref={containerRef}
+        ref={(el) => {
+          containerRef.current = el;
+          onRegister(index, el);
+        }}
         onClick={handleClick}
         className={cn(
           "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8 cursor-pointer",
           "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-19",
-          bgResolved.type !== "none" ? "" : "bg-[#ebebeb]",
+          bgResolved.type === "none" ? "bg-[#ebebeb]" : "",
         )}
         style={
-          bgResolved.type !== "none"
+          bgResolved.type === "preset" || bgResolved.type === "custom"
             ? {
               backgroundImage: `url(${bgResolved.src})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
+            : bgResolved.type === "solid"
+              ? { backgroundColor: bgResolved.color }
             : undefined
         }
       >
         {/* Overlay only when a background image is set */}
-        {bgResolved.type !== "none" && (
+        {(bgResolved.type === "preset" || bgResolved.type === "custom") && (
           <div className="absolute inset-0 bg-black/22 rounded-[inherit] z-0" />
         )}
 
@@ -216,20 +259,17 @@ function FeedItem({
         </div>
       </div>
 
-      {/* ── 4 · Right meta ──────────────────────────── */}
-      <div className="max-lg:hidden flex items-center max-lg:row-start-2 max-lg:col-start-2 max-lg:pl-0">
-        {today && (
-          <div className="flex flex-row items-center gap-[0.85rem] flex-nowrap">
-            <p className="text-sm m-0 shrink-0">
-              Quotes
-              <br />
-              of Today
-            </p>
-          </div>
-        )}
+      {/* ── 4 ──────────────────────────── */}
+      <div className="max-lg:hidden flex flex-col items-start max-lg:row-start-2 max-lg:col-start-2 max-lg:pl-0">
+        <span className="text-sm leading-none">
+          No
+        </span>
+        <span className="text-sm text-foreground leading-none">
+          {no}
+        </span>
       </div>
 
-      {/* ── 5 · Submitter info ──────────────────────────── */}
+      {/* ── 5 ──────────────────────────── */}
       <div className="max-lg:hidden flex items-center gap-2 shrink-0">
         {quote.submitter?.id ? (
           <Link
@@ -271,9 +311,49 @@ export default function HomeClient({ quotes }: HomeClientProps) {
 
   const lenis = useLenis();
 
-  const displayQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES_FEED;
+  const sourceQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES_FEED;
+  const displayQuotes = useMemo(
+    () =>
+      [...sourceQuotes].sort((a, b) => {
+        const aTs = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+        const bTs = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+        return bTs - aTs;
+      }),
+    [sourceQuotes],
+  );
   const listRef = useRef<HTMLDivElement>(null);
-  const fillRef = useRef<HTMLDivElement>(null);
+  const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
+  const monthRailRef = useRef<HTMLDivElement | null>(null);
+  const yearRailRef = useRef<HTMLDivElement | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const previousActiveIndexRef = useRef(0);
+  const previousMonthRef = useRef<string | null>(null);
+  const previousYearRef = useRef<string | null>(null);
+
+  const timelineMeta = useMemo(
+    () =>
+      displayQuotes.map((quote, index) => {
+        const formatted = formatDate(quote.publishedAt);
+        return {
+          index,
+          quoteId: quote.id,
+          monthLabel: formatted.month,
+          yearLabel: formatted.year,
+          dayNumber: formatted.day,
+        };
+      }),
+    [displayQuotes],
+  );
+
+  const activeMeta = timelineMeta[activeIndex] ?? timelineMeta[0];
+  const railMonths = useMemo(
+    () => buildInfiniteMonths(activeMeta?.monthLabel ?? "January", 8),
+    [activeMeta?.monthLabel],
+  );
+  const railYears = useMemo(
+    () => buildInfiniteYears(activeMeta?.yearLabel ?? String(new Date().getFullYear()), 8),
+    [activeMeta?.yearLabel],
+  );
 
   // Pause Lenis when overlay is open
   useEffect(() => {
@@ -285,32 +365,92 @@ export default function HomeClient({ quotes }: HomeClientProps) {
     }
   }, [lenis, selected]);
 
-  // ── GSAP ScrollTrigger — smooth scrubbed timeline fill (synced via Lenis + gsap.ticker) ──────────────────
-  useGSAP(() => {
+  const recomputeActiveCard = useCallback(() => {
+    if (selected) return;
+    const midpoint = window.innerHeight / 2;
+    let nearest = 0;
+    let minDistance = Number.POSITIVE_INFINITY;
+    cardRefs.current.forEach((node, index) => {
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      const cardMid = rect.top + rect.height / 2;
+      const distance = Math.abs(cardMid - midpoint);
+      if (distance < minDistance) {
+        minDistance = distance;
+        nearest = index;
+      }
+    });
+    setActiveIndex((prev) => (prev === nearest ? prev : nearest));
+  }, [selected]);
 
-    const fill = fillRef.current;
-    const list = listRef.current;
-    if (!fill || !list) return;
+  useEffect(() => {
+    let rafId = 0;
+    const onScroll = () => {
+      if (rafId) return;
+      rafId = window.requestAnimationFrame(() => {
+        recomputeActiveCard();
+        rafId = 0;
+      });
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      if (rafId) window.cancelAnimationFrame(rafId);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, [recomputeActiveCard]);
 
-    const ctx = gsap.context(() => {
+  const registerCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
+    cardRefs.current[index] = el;
+  }, []);
+
+  useEffect(() => {
+    const prevMonth = previousMonthRef.current;
+    const prevYear = previousYearRef.current;
+    const prevActive = previousActiveIndexRef.current;
+    const scrollDirection = activeIndex > prevActive ? 1 : -1;
+    previousActiveIndexRef.current = activeIndex;
+    previousMonthRef.current = activeMeta?.monthLabel ?? null;
+    previousYearRef.current = activeMeta?.yearLabel ?? null;
+
+    // Prime refs on first render; do not animate initial mount.
+    if (!prevMonth && !prevYear) return;
+
+    const monthChanged = prevMonth !== activeMeta?.monthLabel;
+    const yearChanged = prevYear !== activeMeta?.yearLabel;
+    if (!monthChanged && !yearChanged) return;
+
+    // Track-style movement: step size is measured from rendered rows,
+    // so changing gap/line-height won't break center alignment.
+    const monthStepPx = getRailStepPx(monthRailRef.current);
+    const yearStepPx = getRailStepPx(yearRailRef.current);
+    if (monthChanged && monthRailRef.current) {
+      gsap.killTweensOf(monthRailRef.current);
       gsap.fromTo(
-        fill,
-        { height: "0%" },
+        monthRailRef.current,
+        { y: -scrollDirection * (monthStepPx || 38) },
         {
-          height: "100%",
-          ease: "none",
-          scrollTrigger: {
-            trigger: list,
-            start: "top center",
-            end: "bottom center",
-            scrub: 0.6,
-          },
+          y: 0,
+          duration: 1,
+          ease: "power4.out",
         },
       );
-    });
-
-    return () => ctx.revert();
-  }, []);
+    }
+    if (yearChanged && yearRailRef.current) {
+      gsap.killTweensOf(yearRailRef.current);
+      gsap.fromTo(
+        yearRailRef.current,
+        { y: -scrollDirection * (yearStepPx || 24) },
+        {
+          y: 0,
+          duration: 1,
+          ease: "power4.out",
+        },
+      );
+    }
+  }, [activeIndex, activeMeta?.monthLabel, activeMeta?.yearLabel]);
 
   // ── Load Google Fonts for custom fontPrimary values ──────────────────────
   useEffect(() => {
@@ -334,51 +474,99 @@ export default function HomeClient({ quotes }: HomeClientProps) {
     <div className="min-h-screen bg-background text-foreground no-scrollbar">
       <div className="max-w-8xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
         <div className="relative">
-          {/* Animated vertical timeline line — GSAP scrubs height */}
-          <div className="grid grid-cols-[1fr_1fr_6fr_1fr_1fr] max-lg:grid-cols-[1fr] absolute inset-0 mt-4 pointer-events-none">
-            <div aria-hidden="true" className="max-lg:hidden" />
-            <div
-              className="relative h-full w-px bg-border pointer-events-none max-lg:hidden place-self-end max-xl:mr-2"
-              aria-hidden="true"
-            >
+          <div
+            className="max-lg:hidden absolute top-4 bottom-0 w-px bg-muted pointer-events-none"
+            style={{ left: "20.5%" }}
+            aria-hidden="true"
+          />
+
+          {/* Desktop-only infinite month/year rails */}
+          <div className="max-lg:hidden pointer-events-none fixed left-10 top-1/2 -translate-y-1/2 z-2 grid grid-cols-[32px_72px] items-center gap-14">
+            <div className="h-[76vh] max-h-[760px] overflow-hidden flex items-center">
               <div
-                className="w-full bg-foreground origin-top"
-                ref={fillRef}
-                style={{ height: "0%" }}
-              />
-              <div className="absolute left-1/2 -translate-x-1/2 top-0 size-2 rounded-full bg-foreground" />
-              <div className="absolute left-1/2 -translate-x-1/2 bottom-0 size-2 rounded-full bg-muted" />
+                ref={yearRailRef}
+                className="flex flex-col items-start text-sm leading-none select-none gap-20 will-change-transform"
+              >
+                {railYears.map((item) => (
+                  <span
+                    key={`year-${item.offset}-${item.value}`}
+                    data-offset={item.offset}
+                    className={cn(
+                      "transition-[color,opacity] duration-400",
+                      item.offset === 0 ? "text-foreground opacity-100" : "text-foreground/20",
+                    )}
+                  >
+                    {item.value}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <div className="h-[76vh] max-h-[760px] overflow-hidden flex items-center">
+              <div
+                ref={monthRailRef}
+                className="flex flex-col items-start text-sm leading-none select-none gap-32 will-change-transform"
+              >
+                {railMonths.map((item) => (
+                  <span
+                    key={`month-${item.offset}-${item.value}`}
+                    data-offset={item.offset}
+                    className={cn(
+                      "transition-[color,opacity] duration-400",
+                      item.offset === 0 ? "text-foreground opacity-100" : "text-foreground/20",
+                    )}
+                  >
+                    {item.value}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
 
           {/* Submit card first, then quote items */}
           <div className="flex flex-col gap-2" ref={listRef}>
-            <SubmitCard total={displayQuotes.length} />
+            <SubmitCard />
             {displayQuotes.map((quote, i) => (
-              <FeedItem
-                key={quote.id}
-                quote={quote}
-                index={i}
-                total={displayQuotes.length}
-                isSelected={selected?.quote.id === quote.id}
-                onSelect={({ quote, rect, cardRect }) => {
-                  setSelected({
-                    quote,
-                    rect: {
-                      top: rect.top,
-                      left: rect.left,
-                      width: rect.width,
-                      height: rect.height,
-                    },
-                    cardRect: {
-                      top: cardRect.top,
-                      left: cardRect.left,
-                      width: cardRect.width,
-                      height: cardRect.height,
-                    },
-                  });
-                }}
-              />
+              <div key={quote.id} className="relative">
+                {/* Per-card timeline dot */}
+                <div
+                  className="max-lg:hidden pointer-events-none absolute top-1/2 -translate-x-1/2 -translate-y-1/2 size-2 rounded-full bg-muted"
+                  style={{ left: "20.5%" }}
+                >
+                  <div
+                    className={cn(
+                      "absolute inset-0 rounded-full transition-[opacity,transform,color] duration-300",
+                      activeIndex === i
+                        ? "opacity-100 bg-foreground scale-100"
+                        : "opacity-0 bg-foreground scale-70",
+                    )}
+                  />
+                </div>
+                <FeedItem
+                  quote={quote}
+                  index={i}
+                  total={displayQuotes.length}
+                  isSelected={selected?.quote.id === quote.id}
+                  isActive={activeIndex === i}
+                  onRegister={registerCardRef}
+                  onSelect={({ quote, rect, cardRect }) => {
+                    setSelected({
+                      quote,
+                      rect: {
+                        top: rect.top,
+                        left: rect.left,
+                        width: rect.width,
+                        height: rect.height,
+                      },
+                      cardRect: {
+                        top: cardRect.top,
+                        left: cardRect.left,
+                        width: cardRect.width,
+                        height: cardRect.height,
+                      },
+                    });
+                  }}
+                />
+              </div>
             ))}
           </div>
         </div>

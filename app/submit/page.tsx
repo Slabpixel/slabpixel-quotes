@@ -15,12 +15,31 @@ import { BACKGROUNDS } from "@/lib/backgrounds";
 import { resolveQuoteBackground } from "@/lib/quote-background";
 import { FONT_OPTIONS, PALETTE_PRESETS, getCardPaletteStyle } from "@/lib/quote-presets";
 import { SOCIAL_PLATFORMS } from "@/lib/social";
+import { submitQuoteSchema } from "@/lib/validations/quote";
 import { cn } from "@/lib/cn";
 
 const DRAFT_KEY = "slabpixel-submit-draft";
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 const MAX_DIMENSION = 1920;
 const TARGET_OUTPUT_BYTES = 2 * 1024 * 1024;
+type SubmitFieldErrors = {
+  text?: string;
+  attribution?: string;
+  socialHandles?: string;
+  consent?: string;
+};
+type BackgroundTab = "solid" | "image" | "upload";
+
+function mapSubmitFieldErrors(
+  source: Record<string, string[] | undefined> | undefined,
+): SubmitFieldErrors {
+  if (!source) return {};
+  return {
+    text: source.text?.[0],
+    attribution: source.attribution?.[0],
+    socialHandles: source.socialHandles?.[0],
+  };
+}
 
 async function compressBackgroundImage(file: File): Promise<File> {
   if (!file.type.startsWith("image/")) return file;
@@ -71,6 +90,7 @@ export default function SubmitPage() {
   const [selectedBackground, setSelectedBackground] = useState<string | null>(
     null,
   );
+  const [backgroundTab, setBackgroundTab] = useState<BackgroundTab>("solid");
   const [backgroundUploadUrl, setBackgroundUploadUrl] = useState<string | null>(
     null,
   );
@@ -82,19 +102,17 @@ export default function SubmitPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [agreedToLegal, setAgreedToLegal] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<SubmitFieldErrors>({});
   const { openAuthModal } = useAuthModal();
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const backgroundFileInputRef = useRef<HTMLInputElement>(null);
-  const didAutoFill = useRef(false);
 
-  // Auto-fill attribution from session
+  // Attribution is always synced to current account name.
   useEffect(() => {
-    if (session?.user?.name && !didAutoFill.current) {
-      setAttribution(session.user.name);
-      didAutoFill.current = true;
-    }
+    setAttribution(session?.user?.name ?? "");
   }, [session?.user?.name]);
 
   // Restore draft from localStorage after OAuth redirect
@@ -104,16 +122,15 @@ export default function SubmitPage() {
       try {
         const draft = JSON.parse(saved);
         if (draft.text) setText(draft.text);
-        if (draft.attribution) setAttribution(draft.attribution);
         if (draft.fontPrimary) setFontPrimary(draft.fontPrimary);
         if (draft.selectedPalette !== undefined)
           setSelectedPalette(draft.selectedPalette);
         if (draft.selectedBackground)
           setSelectedBackground(draft.selectedBackground);
+        if (draft.backgroundTab) setBackgroundTab(draft.backgroundTab);
         if (draft.backgroundUploadUrl)
           setBackgroundUploadUrl(draft.backgroundUploadUrl);
         if (draft.socialHandles) setSocialHandles(draft.socialHandles);
-        didAutoFill.current = true;
       } catch {
         /* ignore malformed draft */
       }
@@ -148,10 +165,10 @@ export default function SubmitPage() {
       DRAFT_KEY,
       JSON.stringify({
         text,
-        attribution,
         fontPrimary,
         selectedPalette,
         selectedBackground,
+        backgroundTab,
         backgroundUploadUrl,
         socialHandles,
       }),
@@ -202,6 +219,7 @@ export default function SubmitPage() {
         throw new Error("Invalid upload response");
       }
       setSelectedBackground(null);
+      setBackgroundTab("upload");
       setBackgroundUploadUrl(data.url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -211,48 +229,85 @@ export default function SubmitPage() {
   };
 
   const handleSubmit = async () => {
-    if (!text.trim() || !attribution.trim()) return;
+    const trimmedText = text.trim();
+    const trimmedAttribution = attribution.trim();
+    const handles = Object.entries(socialHandles)
+      .filter(([, v]) => v.trim())
+      .map(([platformKey, handle]) => {
+        const config = SOCIAL_PLATFORMS.find((p) => p.key === platformKey);
+        const clean = handle.replace(/^@/, "");
+        return config ? `${config.urlPrefix}${clean}` : handle;
+      });
 
     if (!session) {
       openAuthModal({
         callbackURL: "/submit",
         onBeforeGoogleSignIn: saveDraftBeforeGoogleSignIn,
       });
+      setError("Please sign in before submitting your quote.");
       return;
     }
 
+    const payload = {
+      text: trimmedText,
+      attribution: session.user.name?.trim() || trimmedAttribution,
+      socialHandles: handles,
+      fontPrimary,
+      colorPalette:
+        selectedPalette !== null
+          ? JSON.stringify(PALETTE_PRESETS[selectedPalette].colors)
+          : null,
+      backgroundId: selectedBackground,
+      backgroundUrl: backgroundUploadUrl,
+    };
+
+    const parsed = submitQuoteSchema.safeParse(payload);
+    if (!parsed.success) {
+      const flattened = parsed.error.flatten();
+      const nextFieldErrors = mapSubmitFieldErrors(
+        flattened.fieldErrors as Record<string, string[] | undefined>,
+      );
+      setFieldErrors(nextFieldErrors);
+      setError(
+        parsed.error.issues[0]?.message ??
+          "Please fix the highlighted fields and try again.",
+      );
+      return;
+    }
+
+    if (!agreedToLegal) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        consent: "You must agree to Terms and Privacy Policy before submitting.",
+      }));
+      return;
+    }
+
+    setFieldErrors({});
+
     setIsSubmitting(true);
     setError(null);
+    setFieldErrors({});
 
     try {
-      const handles = Object.entries(socialHandles)
-        .filter(([, v]) => v.trim())
-        .map(([platformKey, handle]) => {
-          const config = SOCIAL_PLATFORMS.find((p) => p.key === platformKey);
-          const clean = handle.replace(/^@/, "");
-          return config ? `${config.urlPrefix}${clean}` : handle;
-        });
-
       const res = await fetch("/api/quotes", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          text: text.trim(),
-          attribution: attribution.trim(),
-          socialHandles: handles,
-          fontPrimary,
-          colorPalette:
-            selectedPalette !== null
-              ? JSON.stringify(PALETTE_PRESETS[selectedPalette].colors)
-              : null,
-          backgroundId: selectedBackground,
-          backgroundUrl: backgroundUploadUrl,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || "Failed to submit quote");
+        const data = await res.json().catch(() => null);
+        const details = data?.details?.fieldErrors as
+          | Record<string, string[]>
+          | undefined;
+        if (details) {
+          setFieldErrors(mapSubmitFieldErrors(details));
+        }
+        throw new Error(
+          data?.error ||
+            "Failed to submit quote. Please check the form and try again.",
+        );
       }
 
       setIsSubmitted(true);
@@ -267,6 +322,8 @@ export default function SubmitPage() {
     backgroundUrl: backgroundUploadUrl,
     backgroundId: selectedBackground,
   });
+  const solidBackgrounds = BACKGROUNDS.filter((b) => b.type === "solid");
+  const imageBackgrounds = BACKGROUNDS.filter((b) => b.type === "image");
 
   if (isSubmitted) {
     return (
@@ -307,7 +364,7 @@ export default function SubmitPage() {
       {/* ── Left (desktop) / Top (mobile): Sticky Preview ───────────────────── */}
       <div className="sticky top-0 z-10 h-[calc(42vh+4rem)] min-h-[320px] w-full shrink-0 overflow-hidden bg-background p-2 pt-16 lg:h-screen lg:min-h-0 lg:w-1/2 lg:pt-2">
         <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl lg:rounded-4xl">
-          {bgPreview.type !== "none" ? (
+          {bgPreview.type === "preset" || bgPreview.type === "custom" ? (
             <>
               <Image
                 src={bgPreview.src}
@@ -318,6 +375,11 @@ export default function SubmitPage() {
               />
               <div className="absolute inset-0 bg-black/22" />
             </>
+          ) : bgPreview.type === "solid" ? (
+            <div
+              className="absolute inset-0"
+              style={{ backgroundColor: bgPreview.color }}
+            />
           ) : (
             <div className="absolute inset-0 bg-[#ebebeb]" />
           )}
@@ -343,7 +405,12 @@ export default function SubmitPage() {
               <textarea
                 ref={textareaRef}
                 value={text}
-                onChange={(e) => setText(e.target.value)}
+                onChange={(e) => {
+                  setText(e.target.value);
+                  if (fieldErrors.text) {
+                    setFieldErrors((prev) => ({ ...prev, text: undefined }));
+                  }
+                }}
                 placeholder="Your quotes will appear here..."
                 maxLength={500}
                 rows={1}
@@ -351,11 +418,17 @@ export default function SubmitPage() {
               />
               <input
                 value={attribution}
-                onChange={(e) => setAttribution(e.target.value)}
+                readOnly
                 placeholder="Your name"
                 maxLength={100}
                 className="w-full bg-transparent border-0 outline-none text-sm text-card-muted placeholder:text-card-muted/70 p-0"
               />
+              {fieldErrors.text && (
+                <p className="text-xs text-red-600">{fieldErrors.text}</p>
+              )}
+              {fieldErrors.attribution && (
+                <p className="text-xs text-red-600">{fieldErrors.attribution}</p>
+              )}
             </div>
           </div>
         </div>
@@ -404,9 +477,9 @@ export default function SubmitPage() {
             </div>
           </section>
 
-          {/* Color Theme */}
+          {/* Card Theme */}
           <section>
-            <h3 className="text-sm text-foreground/40 mb-4">Color Theme</h3>
+            <h3 className="text-sm text-foreground/40 mb-4">Card Theme</h3>
             <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-lg:gap-2">
               {PALETTE_PRESETS.map((p, idx) => (
                 <button
@@ -445,6 +518,27 @@ export default function SubmitPage() {
             <h3 className="text-sm text-foreground/40 mb-4">
               Background Theme
             </h3>
+            <div className="inline-flex rounded-xl border border-border p-1 mb-4">
+              {([
+                ["solid", "Solid Color"],
+                ["image", "Background Image"],
+                ["upload", "Upload Image"],
+              ] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => setBackgroundTab(key)}
+                  className={cn(
+                    "px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                    backgroundTab === key
+                      ? "bg-foreground text-background"
+                      : "text-foreground/60 hover:text-foreground",
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
             <input
               ref={backgroundFileInputRef}
               type="file"
@@ -452,7 +546,8 @@ export default function SubmitPage() {
               className="hidden"
               onChange={handleBackgroundFile}
             />
-            <div className="flex flex-wrap gap-2 mb-4">
+            {backgroundTab === "upload" && (
+              <div className="flex flex-wrap gap-2 mb-4">
               <button
                 type="button"
                 disabled={backgroundUploading}
@@ -480,9 +575,34 @@ export default function SubmitPage() {
                   Remove upload
                 </button>
               )}
-            </div>
-            <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
-              {BACKGROUNDS.map((b) => (
+              </div>
+            )}
+            {backgroundTab === "solid" && (
+              <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
+                {solidBackgrounds.map((b) => (
+                  <button
+                    key={b.id}
+                    type="button"
+                    onClick={() => {
+                      setBackgroundUploadUrl(null);
+                      setSelectedBackground(
+                        selectedBackground === b.id ? null : b.id,
+                      );
+                    }}
+                    className={cn(
+                      "aspect-square rounded-xl border-2 overflow-hidden transition-all cursor-pointer relative",
+                      selectedBackground === b.id && !backgroundUploadUrl
+                        ? "border-foreground"
+                        : "border-transparent hover:border-foreground/20",
+                    )}
+                    style={{ backgroundColor: b.color }}
+                  />
+                ))}
+              </div>
+            )}
+            {backgroundTab === "image" && (
+              <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
+                {imageBackgrounds.map((b) => (
                 <button
                   key={b.id}
                   type="button"
@@ -500,20 +620,26 @@ export default function SubmitPage() {
                   )}
                 >
                   <Image
-                    src={b.src}
+                    src={b.src ?? "/backgrounds/abstract-01.jpg"}
                     alt={b.label}
                     fill
                     className="object-cover"
                     sizes="80px"
                   />
                 </button>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </section>
 
           {/* Social Media */}
           <section>
             <h3 className="text-sm text-foreground/40 mb-4">Social Media</h3>
+            {fieldErrors.socialHandles && (
+              <p className="text-xs text-red-600 mb-2">
+                {fieldErrors.socialHandles}
+              </p>
+            )}
             <div className="flex flex-col gap-3">
               {SOCIAL_PLATFORMS.map((platform) => (
                 <div
@@ -563,10 +689,44 @@ export default function SubmitPage() {
           </section>
 
           {/* Submit */}
+          <div className="space-y-2">
+            <label className="flex items-start gap-2 text-sm text-foreground/70">
+              <input
+                type="checkbox"
+                checked={agreedToLegal}
+                onChange={(e) => {
+                  setAgreedToLegal(e.target.checked);
+                  if (fieldErrors.consent) {
+                    setFieldErrors((prev) => ({ ...prev, consent: undefined }));
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <span>
+                I agree to the{" "}
+                <Link href="/terms" className="underline">
+                  Terms and Conditions
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="underline">
+                  Privacy Policy
+                </Link>
+                .
+              </span>
+            </label>
+            {fieldErrors.consent && (
+              <p className="text-xs text-red-600">{fieldErrors.consent}</p>
+            )}
+          </div>
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting || !text.trim() || !attribution.trim()}
+            disabled={
+              isSubmitting ||
+              backgroundUploading ||
+              !text.trim() ||
+              !agreedToLegal
+            }
             className="w-full py-4 bg-foreground text-background font-medium text-sm rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
           >
             <svg width="16" height="16" viewBox="0 0 14 14" fill="none">

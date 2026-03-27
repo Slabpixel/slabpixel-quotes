@@ -159,7 +159,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
       className="flex items-center justify-center relative bg-card-bg"
     >
       {/* Background image / overlay */}
-      {bgResolved.type !== "none" ? (
+      {bgResolved.type === "preset" || bgResolved.type === "custom" ? (
         <>
           <Image
             src={bgResolved.src}
@@ -170,6 +170,11 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
           />
           <div className="absolute inset-0 bg-black/30" />
         </>
+      ) : bgResolved.type === "solid" ? (
+        <div
+          className="absolute inset-0"
+          style={{ backgroundColor: bgResolved.color }}
+        />
       ) : (
         <div className="absolute inset-0 bg-[#ebebeb]" />
       )}
@@ -189,7 +194,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
           type="button"
           aria-label="Close"
           onClick={handleClose}
-          className="absolute -top-16 right-0 lg:-right-16 z-10 h-11 w-11 shrink-0 rounded-full border-0 bg-white text-foreground shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex items-center justify-center cursor-pointer hover:bg-card-bg transition-colors invisible"
+          className="absolute -top-20 -right-8 md:-right-16 md:-top-16 z-10 h-11 w-11 shrink-0 rounded-full border-0 bg-white text-foreground shadow-[0_2px_12px_rgba(0,0,0,0.08)] flex items-center justify-center cursor-pointer hover:bg-card-bg transition-colors invisible"
         >
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
             <path d="M12 4L4 12M4 4l8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
