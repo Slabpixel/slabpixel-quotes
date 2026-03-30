@@ -226,7 +226,7 @@ export default function ProfileClient({
                     onClick={() => setIsEditingBio(true)}
                     className="mt-2 text-sm font-medium text-foreground/50 hover:text-foreground"
                   >
-                    {profile.bio ? "Edit bio" : "Add bio"}
+                    Edit Profile
                   </button>
                 )}
               </>

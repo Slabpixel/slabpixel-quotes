@@ -219,7 +219,7 @@ export default function QuoteOverlay({ quote, rect, cardRect, onClose }: QuoteOv
             </cite>
           </div>
           <div className="flex justify-end opacity-100 transition-opacity duration-200 lg:opacity-0 lg:group-hover:opacity-100">
-            <QuoteShareMenu quote={quote} />
+            <QuoteShareMenu quote={quote} paletteIndex={0} />
           </div>
         </div>
       </div>

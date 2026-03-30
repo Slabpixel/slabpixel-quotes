@@ -1,7 +1,7 @@
 /**
  * Client-side canvas rendering for share card image.
  * Matches the site card design: background (image or palette), white rounded card,
- * quote text with fontPrimary, attribution, submitter, mood, social handles.
+ * quote text with fontPrimary, attribution, submitter, social handles.
  */
 
 import type { QuoteData } from "@/types/quote";
@@ -94,6 +94,7 @@ export async function generateShareCardBlob(
   platform: SharePlatform,
   origin: string,
   onProgress?: (step: ShareCardProgressStep) => void,
+  paletteIndex = 0,
 ): Promise<Blob> {
   onProgress?.("start");
   const config = SHARE_PLATFORMS[platform];
@@ -107,8 +108,11 @@ export async function generateShareCardBlob(
   if (!ctx) throw new Error("Canvas 2d not available");
 
   const bgResolved = resolveQuoteBackground(quote);
-  const palette = getPaletteForQuote(quote, 0);
+  const palette = getPaletteForQuote(quote, paletteIndex);
   const bgColor = palette[0] || "#111111";
+  const accentColor = palette[1] || "#e94560";
+  const textColor = palette[2] || "#1a1a1a";
+  const mutedColor = palette[3] || "#424242";
 
   // 1) Background
   onProgress?.("background");
@@ -189,7 +193,7 @@ export async function generateShareCardBlob(
 
   // 3) Quote text
   let y = cardY2 + innerPad;
-  ctx.fillStyle = "#1a1a1a";
+  ctx.fillStyle = textColor;
   ctx.font = `500 ${quoteFontSize}px ${fontFamily}`;
   ctx.textBaseline = "top";
   for (const line of quoteLines) {
@@ -199,24 +203,23 @@ export async function generateShareCardBlob(
 
   // 4) Attribution
   y += 8;
-  ctx.fillStyle = "rgba(0,0,0,0.55)";
+  ctx.save();
+  ctx.globalAlpha = 0.65;
+  ctx.fillStyle = accentColor;
   ctx.font = `${attrFontSize}px ${fontFamily}`;
   ctx.fillText(quote.attribution, cardX + innerPad, y);
+  ctx.restore();
   y += attrHeight + 8;
-
-  if (quote.mood) {
-    ctx.font = `600 ${metaFontSize}px system-ui, sans-serif`;
-    ctx.fillStyle = "rgba(0,0,0,0.4)";
-    ctx.fillText(quote.mood.toUpperCase(), cardX + innerPad, y);
-    y += metaFontSize + 4;
-  }
 
   // 6) SlabPixel branding bottom-right
   ctx.font = `600 ${metaFontSize - 1}px system-ui, sans-serif`;
-  ctx.fillStyle = "rgba(0,0,0,0.4)";
+  ctx.save();
+  ctx.globalAlpha = 0.5;
+  ctx.fillStyle = mutedColor;
   const brand = "SlabPixel Quotes";
   const brandW = ctx.measureText(brand).width;
   ctx.fillText(brand, cardX + cardWidth - innerPad - brandW, cardY2 + cardHeight - innerPad - metaFontSize);
+  ctx.restore();
 
   onProgress?.("encode");
   return new Promise((resolve, reject) => {

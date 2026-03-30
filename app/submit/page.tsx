@@ -547,33 +547,82 @@ export default function SubmitPage() {
               onChange={handleBackgroundFile}
             />
             {backgroundTab === "upload" && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                <button
-                  type="button"
-                  disabled={backgroundUploading}
-                  onClick={() => backgroundFileInputRef.current?.click()}
-                  className={cn(
-                    "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
-                    backgroundUploadUrl
-                      ? "border-foreground bg-foreground text-background"
-                      : "border-border text-foreground hover:border-foreground/30",
-                    backgroundUploading && "opacity-50 cursor-not-allowed",
-                  )}
-                >
-                  {backgroundUploading
-                    ? "Uploading…"
-                    : backgroundUploadUrl
-                      ? "Custom image selected"
-                      : "Upload your own"}
-                </button>
-                {backgroundUploadUrl && (
+              <div className="mb-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <span className="text-sm text-foreground/70">Upload image</span>
                   <button
                     type="button"
-                    onClick={() => setBackgroundUploadUrl(null)}
-                    className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
+                    disabled={backgroundUploading}
+                    onClick={() => backgroundFileInputRef.current?.click()}
+                    className={cn(
+                      "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
+                      "border-border text-foreground hover:border-foreground/30",
+                      backgroundUploading && "opacity-50 cursor-not-allowed",
+                    )}
                   >
-                    Remove upload
+                    {backgroundUploading ? (
+                      <span className="inline-flex items-center gap-2">
+                        <span
+                          className="size-4 inline-block animate-spin rounded-full border-2 border-foreground/40 border-t-foreground"
+                          aria-hidden
+                        />
+                        Uploading…
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center gap-2">
+                        <svg
+                          width="16"
+                          height="16"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          xmlns="http://www.w3.org/2000/svg"
+                          aria-hidden
+                        >
+                          <path
+                            d="M12 16V4"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                          <path
+                            d="M7 9L12 4L17 9"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M20 16.5V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2.5"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                        Upload
+                      </span>
+                    )}
                   </button>
+                  {backgroundUploadUrl && (
+                    <button
+                      type="button"
+                      onClick={() => setBackgroundUploadUrl(null)}
+                      className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
+                    >
+                      Remove upload
+                    </button>
+                  )}
+                </div>
+
+                {backgroundUploadUrl && (
+                  <div className="mt-3 relative w-full aspect-video rounded-xl border border-border overflow-hidden bg-[#f5f5f5]">
+                    <Image
+                      src={backgroundUploadUrl}
+                      alt="Uploaded background preview"
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1024px) 100vw, 50vw"
+                    />
+                  </div>
                 )}
               </div>
             )}

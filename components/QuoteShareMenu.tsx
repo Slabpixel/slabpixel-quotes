@@ -14,6 +14,7 @@ import {
 
 interface QuoteShareMenuProps {
   quote: QuoteData;
+  paletteIndex?: number;
 }
 
 function buildShareUrl(
@@ -36,7 +37,10 @@ function buildShareUrl(
   return null;
 }
 
-export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
+export function QuoteShareMenu({
+  quote,
+  paletteIndex = 0,
+}: QuoteShareMenuProps) {
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [progress, setProgress] = useState<ShareCardProgressStep | null>(null);
@@ -74,8 +78,12 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
     try {
       const origin =
         typeof window !== "undefined" ? window.location.origin : "";
-      const blob = await generateShareCardBlob(quote, platform, origin, (step) =>
-        setProgress(step),
+      const blob = await generateShareCardBlob(
+        quote,
+        platform,
+        origin,
+        (step) => setProgress(step),
+        paletteIndex,
       );
       const url = URL.createObjectURL(blob);
 
@@ -89,7 +97,7 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
       setModalOpen(true);
       setStatus("idle");
       setProgress(null);
-    } catch (e) {
+    } catch {
       setStatus("error");
       setProgress(null);
       setTimeout(() => setStatus("idle"), 2000);
@@ -221,7 +229,7 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
       </div>
 
       {open && (
-        <div className="absolute right-0 bottom-full mb-2 z-50 min-w-48 rounded-2xl bg-white shadow-[0_12px_45px_rgba(0,0,0,0.10)] border border-black/5 py-2">
+        <div className="absolute right-0 bottom-full mb-2 z-50 min-w-48 rounded-2xl bg-white shadow-[0_12px_45px_rgba(0,0,0,0.10)] border border-black/5 py-2 max-h-[calc(100vh-2rem)] overflow-y-auto">
           {platforms.map(([key, cfg]) => (
             <button
               key={key}
@@ -244,7 +252,7 @@ export function QuoteShareMenu({ quote }: QuoteShareMenuProps) {
             onClick={handleCloseModal}
           >
             <div
-              className="relative w-full max-w-md rounded-3xl bg-white p-4 shadow-[0_18px_60px_rgba(0,0,0,0.35)]"
+              className="relative w-full max-w-md rounded-3xl bg-white p-4 shadow-[0_18px_60px_rgba(0,0,0,0.35)] max-h-[calc(100vh-2rem)] overflow-y-auto"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="mb-3 flex items-center justify-between gap-3">

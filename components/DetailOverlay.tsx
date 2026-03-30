@@ -173,7 +173,7 @@ export default function DetailOverlay({ quote, onClose }: DetailOverlayProps) {
           </div>
           {quote && (
             <div className="mt-4 flex justify-end opacity-100 transition-opacity lg:opacity-0 lg:group-hover:opacity-100">
-              <QuoteShareMenu quote={quote} />
+              <QuoteShareMenu quote={quote} paletteIndex={0} />
             </div>
           )}
         </div>

@@ -255,7 +255,7 @@ function FeedItem({
             className="flex justify-end opacity-0 transition-opacity duration-200 group-hover:opacity-100"
             onClick={(e) => e.stopPropagation()}
           >
-            <QuoteShareMenu quote={quote} />
+            <QuoteShareMenu quote={quote} paletteIndex={index} />
           </div>
         </div>
       </div>
