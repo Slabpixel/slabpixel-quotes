@@ -549,7 +549,6 @@ export default function SubmitPage() {
             {backgroundTab === "upload" && (
               <div className="mb-4">
                 <div className="flex flex-wrap items-center gap-3">
-                  <span className="text-sm text-foreground/70">Upload image</span>
                   <button
                     type="button"
                     disabled={backgroundUploading}

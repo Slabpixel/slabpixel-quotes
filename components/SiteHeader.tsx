@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { gsap } from "gsap";
 import { useSession, signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
 import { useAuthModal } from "@/components/AuthModalProvider";
@@ -14,7 +15,24 @@ const navLinkBase =
   "duration-150 leading-none";
 
 // Custom hamburger icon (two unequal lines)
-function HamburgerIcon() {
+function HamburgerIcon({ hovered }: { hovered: boolean }) {
+  const topLineRef = useRef<SVGLineElement | null>(null);
+  const bottomLineRef = useRef<SVGLineElement | null>(null);
+
+  useEffect(() => {
+    if (!topLineRef.current || !bottomLineRef.current) return;
+    gsap.to(topLineRef.current, {
+      attr: { x1: hovered ? 1 : 17 },
+      duration: 0.28,
+      ease: "power2.out",
+    });
+    gsap.to(bottomLineRef.current, {
+      attr: { x1: hovered ? 17 : 1 },
+      duration: 0.28,
+      ease: "power2.out",
+    });
+  }, [hovered]);
+
   return (
     <svg
       width="34"
@@ -23,14 +41,22 @@ function HamburgerIcon() {
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <path
-        d="M33 9H1"
+      <line
+        ref={bottomLineRef}
+        x1="1"
+        y1="9"
+        x2="33"
+        y2="9"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
       />
-      <path
-        d="M33 1H17"
+      <line
+        ref={topLineRef}
+        x1="17"
+        y1="1"
+        x2="33"
+        y2="1"
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
@@ -42,6 +68,8 @@ function HamburgerIcon() {
 export default function SiteHeader() {
   const { data: session, isPending } = useSession();
   const [isOpen, setIsOpen] = useState(false);
+  const [isHamburgerHovered, setIsHamburgerHovered] = useState(false);
+  const [isMenuHamburgerHovered, setIsMenuHamburgerHovered] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { openAuthModal } = useAuthModal();
 
@@ -87,10 +115,12 @@ export default function SiteHeader() {
         <button
           className="bg-transparent border-0 cursor-pointer text-foreground flex items-center leading-none"
           onClick={() => setIsOpen((v) => !v)}
+          onMouseEnter={() => setIsHamburgerHovered(true)}
+          onMouseLeave={() => setIsHamburgerHovered(false)}
           aria-label={isOpen ? "Close menu" : "Open menu"}
           aria-expanded={isOpen}
         >
-          <HamburgerIcon />
+          <HamburgerIcon hovered={isHamburgerHovered} />
         </button>
 
         {/* Dropdown panel */}
@@ -224,9 +254,11 @@ export default function SiteHeader() {
             <button
               className="bg-transparent border-0 cursor-pointer text-foreground flex items-center shrink-0"
               onClick={close}
+              onMouseEnter={() => setIsMenuHamburgerHovered(true)}
+              onMouseLeave={() => setIsMenuHamburgerHovered(false)}
               aria-label="Close menu"
             >
-              <HamburgerIcon />
+              <HamburgerIcon hovered={isMenuHamburgerHovered} />
             </button>
           </div>
         )}
