@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { ViewTransitions } from "next-view-transitions";
 import "lenis/dist/lenis.css";
 import "./globals.css";
 import SiteHeader from "@/components/SiteHeader";
 import LenisProvider from "@/components/LenisProvider";
 import { AuthModalProvider } from "@/components/AuthModalProvider";
+import ViewTransitionNavigator from "@/components/ViewTransitionNavigator";
 
 const switzer = localFont({
   src: "./Switzer-Variable.woff2",
@@ -24,15 +26,18 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={`${switzer.variable} font-sans antialiased`}>
-        <LenisProvider>
-          <AuthModalProvider>
-            <SiteHeader />
-            {children}
-          </AuthModalProvider>
-        </LenisProvider>
-      </body>
-    </html>
+    <ViewTransitions>
+      <html lang="en">
+        <body className={`${switzer.variable} font-sans antialiased`}>
+          <LenisProvider>
+            <AuthModalProvider>
+              <ViewTransitionNavigator />
+              <SiteHeader />
+              {children}
+            </AuthModalProvider>
+          </LenisProvider>
+        </body>
+      </html>
+    </ViewTransitions>
   );
 }

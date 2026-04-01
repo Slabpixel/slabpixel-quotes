@@ -2,11 +2,12 @@
 
 import { useAuthModal } from "@/components/AuthModalProvider";
 import { BackToHome } from "@/components/BackToHome";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
+import { useAppTransitionRouter } from "@/lib/use-app-transition-router";
 import { Suspense, useEffect } from "react";
 
 function SignInContent() {
-  const router = useRouter();
+  const router = useAppTransitionRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") || "/";
   const { openAuthModal } = useAuthModal();
