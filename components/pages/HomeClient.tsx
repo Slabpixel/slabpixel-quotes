@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import Image from "next/image";
 import { gsap } from "gsap";
@@ -10,8 +11,12 @@ import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { PLACEHOLDER_QUOTES_FEED } from "@/lib/placeholder-quotes";
 import { cn } from "@/lib/cn";
 import { useLenis } from "lenis/react";
-import QuoteOverlay from "@/components/QuoteOverlay";
-import { QuoteShareMenu } from "@/components/QuoteShareMenu";
+
+const QuoteOverlay = dynamic(() => import("@/components/QuoteOverlay"));
+const QuoteShareMenu = dynamic(async () => {
+  const mod = await import("@/components/QuoteShareMenu");
+  return mod.QuoteShareMenu;
+});
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 function formatDate(iso: string | null) {
@@ -311,8 +316,12 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   } | null>(null);
 
   const lenis = useLenis();
-
-  const sourceQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES_FEED;
+  const PAGE_SIZE = 24;
+  const [loadedQuotes, setLoadedQuotes] = useState<QuoteData[]>(quotes);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(quotes.length >= PAGE_SIZE);
+  const sourceQuotes = loadedQuotes.length > 0 ? loadedQuotes : PLACEHOLDER_QUOTES_FEED;
   const displayQuotes = useMemo(
     () =>
       [...sourceQuotes].sort((a, b) => {
@@ -330,6 +339,13 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   const previousActiveIndexRef = useRef(0);
   const previousMonthRef = useRef<string | null>(null);
   const previousYearRef = useRef<string | null>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setLoadedQuotes(quotes);
+    setCurrentPage(1);
+    setHasMore(quotes.length >= PAGE_SIZE);
+  }, [quotes]);
 
   const timelineMeta = useMemo(
     () =>
@@ -406,6 +422,75 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   const registerCardRef = useCallback((index: number, el: HTMLDivElement | null) => {
     cardRefs.current[index] = el;
   }, []);
+
+  const loadMoreQuotes = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = currentPage + 1;
+      const res = await fetch(`/api/quotes?page=${nextPage}&limit=${PAGE_SIZE}`);
+      if (!res.ok) return;
+      const data = (await res.json()) as { quotes?: QuoteData[] };
+      const incoming = Array.isArray(data.quotes) ? data.quotes : [];
+      if (incoming.length === 0) {
+        setHasMore(false);
+        return;
+      }
+      setLoadedQuotes((prev) => {
+        const seen = new Set(prev.map((q) => q.id));
+        const merged = [...prev];
+        for (const q of incoming) {
+          if (!seen.has(q.id)) merged.push(q);
+        }
+        return merged;
+      });
+      setCurrentPage(nextPage);
+      setHasMore(incoming.length >= PAGE_SIZE);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [currentPage, hasMore, loadingMore]);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        void loadMoreQuotes();
+      },
+      {
+        rootMargin: "600px 0px 600px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMoreQuotes]);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    if (!sentinel || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (!entry?.isIntersecting) return;
+        void loadMoreQuotes();
+      },
+      {
+        // Preload next page a bit before bottom for smoother UX.
+        rootMargin: "600px 0px 600px 0px",
+        threshold: 0.01,
+      },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, loadMoreQuotes]);
 
   useEffect(() => {
     const prevMonth = previousMonthRef.current;
@@ -569,6 +654,14 @@ export default function HomeClient({ quotes }: HomeClientProps) {
                 />
               </div>
             ))}
+            {loadedQuotes.length > 0 && (
+              <div ref={loadMoreSentinelRef} className="h-10 w-full" aria-hidden="true" />
+            )}
+            {loadingMore && (
+              <div className="flex justify-center py-6 text-sm text-foreground/60">
+                Loading more quotes...
+              </div>
+            )}
           </div>
         </div>
       </div>

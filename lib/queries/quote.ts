@@ -4,6 +4,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { unstable_cache } from "next/cache";
 import type { QuoteData } from "@/types/quote";
 import {
   PLACEHOLDER_QUOTES_FEED,
@@ -116,6 +117,7 @@ export const quoteSelectForApiList = {
     select: {
       id: true,
       name: true,
+      profilePhoto: true,
       image: true,
     },
   },
@@ -147,20 +149,31 @@ export const quoteSelectForApiDetail = {
 } as const;
 
 // ─── Query helpers (server-only: used in pages and API routes) ─────────────────
+export const PUBLISHED_QUOTES_FEED_TAG = "published-quotes-feed";
+const PUBLISHED_QUOTES_FEED_REVALIDATE_SECONDS = 60;
 
 export type QuoteForFeed = Awaited<
   ReturnType<typeof prisma.quote.findMany<{ select: typeof quoteSelectForFeed }>>
 >[number];
 
 /** Fetch published quotes for home/explore feed. Returns serialized QuoteData[]. */
-export async function getPublishedQuotesForFeed(limit = 50): Promise<QuoteData[]> {
+export async function getPublishedQuotesForFeed(limit = 24): Promise<QuoteData[]> {
   try {
-    const quotes = await prisma.quote.findMany({
-      where: { status: "PUBLISHED" },
-      orderBy: { publishedAt: "desc" },
-      take: limit,
-      select: quoteSelectForFeed,
-    });
+    const cachedQuery = unstable_cache(
+      async () =>
+        prisma.quote.findMany({
+          where: { status: "PUBLISHED" },
+          orderBy: { publishedAt: "desc" },
+          take: limit,
+          select: quoteSelectForFeed,
+        }),
+      ["published-quotes-feed", String(limit)],
+      {
+        revalidate: PUBLISHED_QUOTES_FEED_REVALIDATE_SECONDS,
+        tags: [PUBLISHED_QUOTES_FEED_TAG],
+      },
+    );
+    const quotes = await cachedQuery();
     return quotes.map(serializeQuoteForFeed);
   } catch (err) {
     if (usePlaceholderQuotesInDev()) return PLACEHOLDER_QUOTES_FEED;

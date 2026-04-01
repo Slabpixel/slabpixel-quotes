@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { prisma } from "@/lib/db";
 import { auth } from "@/lib/auth";
 import { updateQuoteStatusSchema } from "@/lib/validations/quote";
 import { headers } from "next/headers";
+import { PUBLISHED_QUOTES_FEED_TAG } from "@/lib/queries/quote";
 
 // GET /api/dashboard/quotes/[id] — get full quote details for admin
 export async function GET(
@@ -88,6 +90,10 @@ export async function PATCH(
     },
   });
 
+  if (existing.status === "PUBLISHED" || data.status === "PUBLISHED") {
+    revalidateTag(PUBLISHED_QUOTES_FEED_TAG);
+  }
+
   return NextResponse.json({ quote });
 }
 
@@ -110,6 +116,10 @@ export async function DELETE(
   }
 
   await prisma.quote.delete({ where: { id } });
+
+  if (existing.status === "PUBLISHED") {
+    revalidateTag(PUBLISHED_QUOTES_FEED_TAG);
+  }
 
   return NextResponse.json({ success: true });
 }
