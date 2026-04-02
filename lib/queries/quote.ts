@@ -6,10 +6,6 @@
 import { prisma } from "@/lib/db";
 import { unstable_cache } from "next/cache";
 import type { QuoteData } from "@/types/quote";
-import {
-  PLACEHOLDER_QUOTES_FEED,
-  usePlaceholderQuotesInDev,
-} from "@/lib/placeholder-quotes";
 
 // ─── Serialization helpers ───────────────────────────────────────────────────
 
@@ -18,26 +14,49 @@ export function normalizeSocialHandles(value: unknown): string[] {
   return Array.isArray(value) ? (value as string[]) : [];
 }
 
+/**
+ * Dates from Prisma are `Date`; after `unstable_cache` hits they deserialize as ISO strings.
+ */
+export function serializeDateToIso(value: unknown): string | null {
+  if (value == null) return null;
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value.toISOString();
+  }
+  if (typeof value === "string") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d.toISOString();
+  }
+  return null;
+}
+
+function serializeRequiredDate(value: unknown, field: string): string {
+  const s = serializeDateToIso(value);
+  if (s == null) throw new TypeError(`Invalid or missing date: ${field}`);
+  return s;
+}
+
+type DateLike = Date | string | null | undefined;
+
 /** Serialize a quote for feed (home/explore): socialHandles + publishedAt. */
-export function serializeQuoteForFeed<T extends { socialHandles?: unknown; publishedAt?: Date | null }>(
+export function serializeQuoteForFeed<T extends { socialHandles?: unknown; publishedAt?: DateLike }>(
   q: T,
 ): Omit<T, "socialHandles" | "publishedAt"> & { socialHandles: string[]; publishedAt: string | null } {
   return {
     ...q,
     socialHandles: normalizeSocialHandles(q.socialHandles),
-    publishedAt: q.publishedAt?.toISOString() ?? null,
+    publishedAt: serializeDateToIso(q.publishedAt),
   };
 }
 
 /** Serialize a quote for your-quotes page: socialHandles + createdAt + publishedAt. */
 export function serializeQuoteForYourQuotes<
-  T extends { socialHandles?: unknown; createdAt: Date; publishedAt?: Date | null },
+  T extends { socialHandles?: unknown; createdAt: DateLike; publishedAt?: DateLike },
 >(q: T) {
   return {
     ...q,
     socialHandles: normalizeSocialHandles(q.socialHandles),
-    createdAt: q.createdAt.toISOString(),
-    publishedAt: q.publishedAt?.toISOString() ?? null,
+    createdAt: serializeRequiredDate(q.createdAt, "createdAt"),
+    publishedAt: serializeDateToIso(q.publishedAt),
   };
 }
 
@@ -45,17 +64,17 @@ export function serializeQuoteForYourQuotes<
 export function serializeQuoteForDashboard<
   T extends {
     socialHandles?: unknown;
-    createdAt: Date;
-    updatedAt: Date;
-    publishedAt?: Date | null;
+    createdAt: DateLike;
+    updatedAt: DateLike;
+    publishedAt?: DateLike;
   },
 >(q: T) {
   return {
     ...q,
     socialHandles: normalizeSocialHandles(q.socialHandles),
-    createdAt: q.createdAt.toISOString(),
-    updatedAt: q.updatedAt.toISOString(),
-    publishedAt: q.publishedAt?.toISOString() ?? null,
+    createdAt: serializeRequiredDate(q.createdAt, "createdAt"),
+    updatedAt: serializeRequiredDate(q.updatedAt, "updatedAt"),
+    publishedAt: serializeDateToIso(q.publishedAt),
   };
 }
 
@@ -158,109 +177,74 @@ export type QuoteForFeed = Awaited<
 
 /** Fetch published quotes for home/explore feed. Returns serialized QuoteData[]. */
 export async function getPublishedQuotesForFeed(limit = 24): Promise<QuoteData[]> {
-  try {
-    const cachedQuery = unstable_cache(
-      async () =>
-        prisma.quote.findMany({
-          where: { status: "PUBLISHED" },
-          orderBy: { publishedAt: "desc" },
-          take: limit,
-          select: quoteSelectForFeed,
-        }),
-      ["published-quotes-feed", String(limit)],
-      {
-        revalidate: PUBLISHED_QUOTES_FEED_REVALIDATE_SECONDS,
-        tags: [PUBLISHED_QUOTES_FEED_TAG],
-      },
-    );
-    const quotes = await cachedQuery();
-    return quotes.map(serializeQuoteForFeed);
-  } catch (err) {
-    if (usePlaceholderQuotesInDev()) return PLACEHOLDER_QUOTES_FEED;
-    throw err;
-  }
+  const cachedQuery = unstable_cache(
+    async () =>
+      prisma.quote.findMany({
+        where: { status: "PUBLISHED" },
+        orderBy: { publishedAt: "desc" },
+        take: limit,
+        select: quoteSelectForFeed,
+      }),
+    ["published-quotes-feed", String(limit)],
+    {
+      revalidate: PUBLISHED_QUOTES_FEED_REVALIDATE_SECONDS,
+      tags: [PUBLISHED_QUOTES_FEED_TAG],
+    },
+  );
+  const quotes = await cachedQuery();
+  return quotes.map(serializeQuoteForFeed);
 }
 
 /** Fetch current user's quotes for your-quotes page. Returns serialized list. */
 export async function getUserQuotesForYourQuotes(userId: string) {
-  try {
-    const quotes = await prisma.quote.findMany({
-      where: { submitterId: userId },
-      orderBy: { createdAt: "desc" },
-      select: quoteSelectForYourQuotes,
-    });
-    return quotes.map(serializeQuoteForYourQuotes);
-  } catch (err) {
-    if (usePlaceholderQuotesInDev()) return [];
-    throw err;
-  }
+  const quotes = await prisma.quote.findMany({
+    where: { submitterId: userId },
+    orderBy: { createdAt: "desc" },
+    select: quoteSelectForYourQuotes,
+  });
+  return quotes.map(serializeQuoteForYourQuotes);
 }
-
-const EMPTY_STATS = {
-  total: 0,
-  pending: 0,
-  inReview: 0,
-  approved: 0,
-  published: 0,
-  rejected: 0,
-};
 
 /** Quote stats for dashboard. */
 export async function getQuoteStats() {
-  try {
-    const [total, pending, inReview, approved, published, rejected] =
-      await Promise.all([
-        prisma.quote.count(),
-        prisma.quote.count({ where: { status: "PENDING" } }),
-        prisma.quote.count({ where: { status: "IN_REVIEW" } }),
-        prisma.quote.count({ where: { status: "APPROVED" } }),
-        prisma.quote.count({ where: { status: "PUBLISHED" } }),
-        prisma.quote.count({ where: { status: "REJECTED" } }),
-      ]);
-    return { total, pending, inReview, approved, published, rejected };
-  } catch (err) {
-    if (usePlaceholderQuotesInDev()) return EMPTY_STATS;
-    throw err;
-  }
+  const [total, pending, inReview, approved, published, rejected] =
+    await Promise.all([
+      prisma.quote.count(),
+      prisma.quote.count({ where: { status: "PENDING" } }),
+      prisma.quote.count({ where: { status: "IN_REVIEW" } }),
+      prisma.quote.count({ where: { status: "APPROVED" } }),
+      prisma.quote.count({ where: { status: "PUBLISHED" } }),
+      prisma.quote.count({ where: { status: "REJECTED" } }),
+    ]);
+  return { total, pending, inReview, approved, published, rejected };
 }
 
 /** Fetch published quotes by submitter (for public profile). */
 export async function getPublishedQuotesByUser(userId: string): Promise<QuoteData[]> {
-  try {
-    const quotes = await prisma.quote.findMany({
-      where: { submitterId: userId, status: "PUBLISHED" },
-      orderBy: { publishedAt: "desc" },
-      select: quoteSelectForFeed,
-    });
-    return quotes.map(serializeQuoteForFeed);
-  } catch (err) {
-    if (usePlaceholderQuotesInDev()) return [];
-    throw err;
-  }
+  const quotes = await prisma.quote.findMany({
+    where: { submitterId: userId, status: "PUBLISHED" },
+    orderBy: { publishedAt: "desc" },
+    select: quoteSelectForFeed,
+  });
+  return quotes.map(serializeQuoteForFeed);
 }
 
 /** Fetch all quotes + stats for dashboard (admin). */
 export async function getDashboardQuotesWithStats() {
-  try {
-    const [quotes, stats] = await Promise.all([
-      prisma.quote.findMany({
-        orderBy: { createdAt: "desc" },
-        include: {
-          submitter: {
-            select: { id: true, name: true, email: true, image: true },
-          },
-          curator: {
-            select: { id: true, name: true },
-          },
+  const [quotes, stats] = await Promise.all([
+    prisma.quote.findMany({
+      orderBy: { createdAt: "desc" },
+      include: {
+        submitter: {
+          select: { id: true, name: true, email: true, image: true },
         },
-      }),
-      getQuoteStats(),
-    ]);
-    const serialized = quotes.map(serializeQuoteForDashboard);
-    return { quotes: serialized, stats };
-  } catch (err) {
-    if (usePlaceholderQuotesInDev())
-      return { quotes: [], stats: EMPTY_STATS };
-    throw err;
-  }
+        curator: {
+          select: { id: true, name: true },
+        },
+      },
+    }),
+    getQuoteStats(),
+  ]);
+  const serialized = quotes.map(serializeQuoteForDashboard);
+  return { quotes: serialized, stats };
 }

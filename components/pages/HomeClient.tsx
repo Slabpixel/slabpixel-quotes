@@ -8,7 +8,6 @@ import { gsap } from "gsap";
 import { type QuoteData } from "@/types/quote";
 import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
-import { PLACEHOLDER_QUOTES_FEED } from "@/lib/placeholder-quotes";
 import { cn } from "@/lib/cn";
 import { useLenis } from "lenis/react";
 
@@ -321,15 +320,14 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(quotes.length >= PAGE_SIZE);
-  const sourceQuotes = loadedQuotes.length > 0 ? loadedQuotes : PLACEHOLDER_QUOTES_FEED;
   const displayQuotes = useMemo(
     () =>
-      [...sourceQuotes].sort((a, b) => {
+      [...loadedQuotes].sort((a, b) => {
         const aTs = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
         const bTs = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
         return bTs - aTs;
       }),
-    [sourceQuotes],
+    [loadedQuotes],
   );
   const listRef = useRef<HTMLDivElement>(null);
   const cardRefs = useRef<Array<HTMLDivElement | null>>([]);
@@ -611,6 +609,11 @@ export default function HomeClient({ quotes }: HomeClientProps) {
           {/* Submit card first, then quote items */}
           <div className="flex flex-col gap-2" ref={listRef}>
             <SubmitCard />
+            {displayQuotes.length === 0 && (
+              <p className="text-sm text-foreground/50 py-12 text-center max-w-md mx-auto">
+                No published quotes yet. Be the first to submit one.
+              </p>
+            )}
             {displayQuotes.map((quote, i) => (
               <div key={quote.id} className="relative">
                 {/* Per-card timeline dot */}

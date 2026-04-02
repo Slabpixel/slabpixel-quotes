@@ -1,36 +1,35 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { type QuoteData } from "@/types/quote";
 import QuoteCanvasGrid from "@/components/QuoteCanvasGrid";
 import SiteHeader from "@/components/SiteHeader";
 import Loader from "@/components/Loader";
 import { BackToHome } from "@/components/BackToHome";
-import { PLACEHOLDER_QUOTES_FEED } from "@/lib/placeholder-quotes";
 
 interface ExploreClientProps {
   quotes: QuoteData[];
 }
 
 export default function ExploreClient({ quotes }: ExploreClientProps) {
-  const [showLoader, setShowLoader] = useState(true);
+  const [showLoader, setShowLoader] = useState(() => quotes.length > 0);
   const entranceRef = useRef<(() => void) | null>(null);
 
-  const displayQuotes = quotes.length > 0 ? quotes : PLACEHOLDER_QUOTES_FEED;
+  useEffect(() => {
+    if (quotes.length === 0) setShowLoader(false);
+  }, [quotes.length]);
 
   const handleLoaderComplete = useCallback(() => {
     setShowLoader(false);
   }, []);
 
   const handleLoaderFadeStart = useCallback(() => {
-    // Fire entrance immediately when fade begins — no delay
     entranceRef.current?.();
   }, []);
 
   const handleSceneReady = useCallback(
     (controls: { playEntrance: () => void }) => {
       entranceRef.current = controls.playEntrance;
-      // If loader already finished (e.g. fast load), play immediately
       if (!showLoader) {
         controls.playEntrance();
       }
@@ -40,7 +39,7 @@ export default function ExploreClient({ quotes }: ExploreClientProps) {
 
   return (
     <>
-      {showLoader && (
+      {showLoader && quotes.length > 0 && (
         <Loader
           onComplete={handleLoaderComplete}
           onFadeStart={handleLoaderFadeStart}
@@ -48,7 +47,18 @@ export default function ExploreClient({ quotes }: ExploreClientProps) {
       )}
       <SiteHeader />
       <BackToHome />
-      <QuoteCanvasGrid quotes={displayQuotes} onReady={handleSceneReady} />
+      {quotes.length === 0 ? (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-[2] px-6 text-center"
+          style={{ fontFamily: "var(--font-secondary), sans-serif" }}
+        >
+          <p className="text-sm text-foreground/50 max-w-sm">
+            No published quotes to explore yet.
+          </p>
+        </div>
+      ) : (
+        <QuoteCanvasGrid quotes={quotes} onReady={handleSceneReady} />
+      )}
     </>
   );
 }
