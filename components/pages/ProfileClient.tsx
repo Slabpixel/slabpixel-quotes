@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useRef, type ChangeEvent } from "react";
+import { useEffect, useState, useRef, type ChangeEvent } from "react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { QuoteData } from "@/types/quote";
 import type { PublicProfile } from "@/types/profile";
 import { resolveQuoteBackground } from "@/lib/quote-background";
@@ -11,11 +11,15 @@ import { cn } from "@/lib/cn";
 import SiteHeader from "@/components/SiteHeader";
 import { BackToHome } from "@/components/BackToHome";
 import QuoteOverlay from "@/components/QuoteOverlay";
+import StatusBadge from "@/components/StatusBadge";
 
 interface ProfileClientProps {
   profile: PublicProfile;
   quotes: QuoteData[];
+  draftQuotes: QuoteData[];
   isOwnProfile: boolean;
+  canViewDraftQuotes: boolean;
+  canDeleteDraftQuotes: boolean;
 }
 
 function ProfileAvatar({
@@ -57,9 +61,13 @@ function ProfileAvatar({
 export default function ProfileClient({
   profile,
   quotes: initialQuotes,
+  draftQuotes: initialDraftQuotes,
   isOwnProfile,
+  canViewDraftQuotes,
+  canDeleteDraftQuotes,
 }: ProfileClientProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [name, setName] = useState(profile.name);
   const [bio, setBio] = useState(profile.bio ?? "");
   const [profilePhoto, setProfilePhoto] = useState(profile.profilePhoto ?? profile.image ?? null);
@@ -67,6 +75,17 @@ export default function ProfileClient({
   const [savingBio, setSavingBio] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [drafts, setDrafts] = useState(initialDraftQuotes);
+  const [deletingDraftId, setDeletingDraftId] = useState<string | null>(null);
+  const [draftDeleteError, setDraftDeleteError] = useState<string | null>(null);
+  type ProfileTab = "published" | "draft";
+  const [activeTab, setActiveTab] = useState<ProfileTab>("published");
+
+  useEffect(() => {
+    if (!canViewDraftQuotes) return;
+    const tab = searchParams.get("tab");
+    setActiveTab(tab === "draft" ? "draft" : "published");
+  }, [canViewDraftQuotes, searchParams]);
   const [selected, setSelected] = useState<{
     quote: QuoteData;
     rect: { top: number; left: number; width: number; height: number };
@@ -137,6 +156,32 @@ export default function ProfileClient({
   };
 
   const avatarSrc = profilePhoto;
+
+  const removeDraftQuote = async (quoteId: string) => {
+    if (!canDeleteDraftQuotes) return;
+    if (!confirm("Remove this draft quote?")) return;
+
+    setDraftDeleteError(null);
+    setDeletingDraftId(quoteId);
+    try {
+      const res = await fetch(`/api/me/quotes/${quoteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          typeof data?.error === "string" ? data.error : "Failed to delete draft",
+        );
+      }
+
+      setDrafts((prev) => prev.filter((q) => q.id !== quoteId));
+    } catch (err) {
+      setDraftDeleteError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setDeletingDraftId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -246,23 +291,95 @@ export default function ProfileClient({
           </button>
         </div>
 
-        {/* Quotes grid — Instagram style */}
+        {/* Quotes tabs */}
         <div className="border-t border-border pt-8">
-          <h2 className="text-sm font-medium text-foreground/50 uppercase tracking-wider mb-6">
-            Quotes
-          </h2>
-          {initialQuotes.length === 0 ? (
+          <div className="flex flex-wrap gap-2 mb-8">
+            <button
+              type="button"
+              onClick={() => setActiveTab("published")}
+              className={`px-4 py-2 text-xs font-medium tracking-normal rounded-full border transition-all cursor-pointer ${
+                activeTab === "published"
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
+              }`}
+            >
+              My Quotes ({initialQuotes.length})
+            </button>
+            {canViewDraftQuotes && (
+              <button
+                type="button"
+                onClick={() => setActiveTab("draft")}
+                className={`px-4 py-2 text-xs font-medium tracking-normal rounded-full border transition-all cursor-pointer ${
+                  activeTab === "draft"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
+                }`}
+              >
+                Draft ({drafts.length})
+              </button>
+            )}
+          </div>
+
+          {activeTab === "draft" ? (
+            <>
+              {draftDeleteError && (
+                <div className="text-red-600 text-sm py-2 mb-4 text-center">
+                  {draftDeleteError}
+                </div>
+              )}
+
+              {drafts.length === 0 ? (
+                <p className="text-foreground/40 text-sm py-12 text-center">
+                  No drafts yet.
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {drafts.map((quote) => (
+                    <ProfileQuoteCard
+                      key={quote.id}
+                      quote={quote}
+                      status={quote.status ?? null}
+                      onRemove={
+                        canDeleteDraftQuotes
+                          ? () => removeDraftQuote(quote.id)
+                          : undefined
+                      }
+                      removing={deletingDraftId === quote.id}
+                      onSelect={(rect, cardRect) =>
+                        setSelected({
+                          quote,
+                          rect: {
+                            top: rect.top,
+                            left: rect.left,
+                            width: rect.width,
+                            height: rect.height,
+                          },
+                          cardRect: {
+                            top: cardRect.top,
+                            left: cardRect.left,
+                            width: cardRect.width,
+                            height: cardRect.height,
+                          },
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              )}
+            </>
+          ) : initialQuotes.length === 0 ? (
             <p className="text-foreground/40 text-sm py-12 text-center">
               {isOwnProfile
                 ? "Your published quotes will appear here."
                 : "No published quotes yet."}
             </p>
           ) : (
-            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+            <div className="space-y-4">
               {initialQuotes.map((quote) => (
                 <ProfileQuoteCard
                   key={quote.id}
                   quote={quote}
+                  status={null}
                   onSelect={(rect, cardRect) =>
                     setSelected({
                       quote,
@@ -301,10 +418,16 @@ export default function ProfileClient({
 
 function ProfileQuoteCard({
   quote,
+  status,
   onSelect,
+  onRemove,
+  removing,
 }: {
   quote: QuoteData;
+  status?: string | null;
   onSelect: (rect: DOMRect, cardRect: DOMRect) => void;
+  onRemove?: (() => void) | undefined;
+  removing?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -330,11 +453,11 @@ function ProfileQuoteCard({
         }
       }}
       className={cn(
-        "aspect-3/4 rounded-xl overflow-hidden cursor-pointer relative group",
-        bgResolved.type === "none" && "bg-card-bg",
+        "rounded-4xl h-full relative flex items-center justify-center min-h-[440px] overflow-hidden p-8 cursor-pointer",
+        "max-md:p-6 max-sm:min-h-[260px]",
+        bgResolved.type === "none" ? "bg-[#ebebeb]" : "",
       )}
       style={{
-        ...getCardPaletteStyle(quote, 0),
         ...(bgResolved.type === "preset" || bgResolved.type === "custom"
           ? {
               backgroundImage: `url(${bgResolved.src})`,
@@ -342,31 +465,58 @@ function ProfileQuoteCard({
               backgroundPosition: "center",
             }
           : bgResolved.type === "solid"
-            ? {
-                backgroundColor: bgResolved.color,
-              }
-          : null),
+            ? { backgroundColor: bgResolved.color }
+            : undefined),
       }}
     >
       {(bgResolved.type === "preset" || bgResolved.type === "custom") && (
-        <div className="absolute inset-0 bg-black/25" />
+        <div className="absolute inset-0 bg-black/22 rounded-[inherit]" />
       )}
-      <div className="absolute inset-2 flex items-center justify-center">
+
+      {status && (
+        <div className="absolute top-4 right-4 z-20 flex flex-col items-end gap-1">
+          <StatusBadge
+            status={status}
+            className="px-2 py-0.5 text-[0.62rem]"
+          />
+        </div>
+      )}
+
+      {onRemove && (
+        <button
+          type="button"
+          aria-label="Remove draft quote"
+          disabled={removing}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute top-4 left-4 z-20 inline-flex items-center justify-center rounded-full bg-white/90 text-foreground/80 border border-border w-8 h-8 text-[0.65rem] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {removing ? "…" : "×"}
+        </button>
+      )}
+
+      {/* White card (palette-driven) */}
+      <div className="relative z-10 w-full flex items-center justify-center">
         <div
           ref={cardRef}
-          className="w-full aspect-16/10 rounded-lg bg-card-bg text-card-text p-2 flex flex-col justify-start transform-gpu"
+          className={cn(
+            "group relative z-1 bg-card-bg text-card-text rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4",
+          )}
           style={{
-            fontFamily: quote.fontPrimary
-              ? `"${quote.fontPrimary}", serif`
-              : undefined,
+            ...getCardPaletteStyle(quote, 0),
+            fontFamily: quote.fontPrimary ? `"${quote.fontPrimary}", serif` : undefined,
           }}
         >
-          <p className="text-[0.65rem] sm:text-xs font-medium line-clamp-2 leading-tight">
-            {quote.text}
-          </p>
-          <p className="text-[0.55rem] sm:text-[0.65rem] text-card-accent mt-0.5 truncate">
-            {quote.attribution}
-          </p>
+          <div className="flex flex-col gap-4 w-full">
+            <blockquote className="text-lg font-medium leading-1.4 m-0">
+              {quote.text}
+            </blockquote>
+            <cite className="text-sm text-card-accent not-italic block">
+              {quote.attribution}
+            </cite>
+          </div>
         </div>
       </div>
     </div>

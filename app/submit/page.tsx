@@ -341,7 +341,7 @@ export default function SubmitPage() {
           <div className="flex flex-wrap gap-4 justify-center pt-4">
             <BackToHome />
             <Link
-              href="/explore"
+              href="/"
               className="px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-foreground/5 transition-colors"
             >
               Back to Grid

@@ -7,6 +7,7 @@ import { gsap } from "gsap";
 import { useSession, signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/cn";
 import { useAuthModal } from "@/components/AuthModalProvider";
+import { useSubmitQuoteModal } from "@/components/SubmitQuoteModalProvider";
 
 // Re-usable base class for every dropdown nav item (Link + button)
 const navLinkBase =
@@ -72,6 +73,7 @@ export default function SiteHeader() {
   const [isMenuHamburgerHovered, setIsMenuHamburgerHovered] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { openAuthModal } = useAuthModal();
+  const { openSubmitModal } = useSubmitQuoteModal();
 
   const user = session?.user;
   const admin = user?.role === "admin";
@@ -192,13 +194,16 @@ export default function SiteHeader() {
                       </button>
                     </>
                   )}
-                  <Link
-                    href="/submit"
+                  <button
+                    type="button"
                     className={cn(navLinkBase)}
-                    onClick={close}
+                    onClick={() => {
+                      close();
+                      openSubmitModal();
+                    }}
                   >
                     Submit a Quotes
-                  </Link>
+                  </button>
 
                   {!isPending && user && (
                     <>

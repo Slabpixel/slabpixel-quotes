@@ -1,9 +1,244 @@
 "use client";
 
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import { BackToHome } from "@/components/BackToHome";
 import { STATUS_COLORS, STATUS_OPTIONS } from "@/lib/constants/quote-status";
 import StatusBadge from "@/components/StatusBadge";
+import { cn } from "@/lib/cn";
+import { getCardPaletteStyle } from "@/lib/quote-presets";
+import { resolveQuoteBackground } from "@/lib/quote-background";
+import { useGoogleFont } from "@/lib/use-google-font";
+
+function ChevronDownIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={cn("transition-transform text-foreground/60", open && "rotate-180")}
+      aria-hidden="true"
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
+  );
+}
+
+function TrashIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </svg>
+  );
+}
+
+function TagIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      aria-hidden="true"
+    >
+      <path d="M20.59 13.41L11 3H4v7l10.59 9.59a2 2 0 002.82 0l3.18-3.18a2 2 0 000-2.82z" />
+      <path d="M7.5 7.5h.01" />
+    </svg>
+  );
+}
+
+function StatIcon({ kind, className }: { kind: string; className?: string }) {
+  const common = cn("text-foreground/70", className);
+  switch (kind) {
+    case "total":
+      return (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={common}
+          aria-hidden="true"
+        >
+          <path d="M12 2l9 5-9 5-9-5 9-5z" />
+          <path d="M3 12l9 5 9-5" />
+          <path d="M3 17l9 5 9-5" />
+        </svg>
+      );
+    case "pending":
+      return (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={common}
+          aria-hidden="true"
+        >
+          <path d="M5 3h14" />
+          <path d="M7 7h10" />
+          <path d="M12 7v7l3 3" />
+          <path d="M8 14l4 4 4-4" opacity="0.25" />
+        </svg>
+      );
+    case "review":
+      return (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={common}
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M21 21l-4.3-4.3" />
+          <path d="M8.7 10.8h4.6" />
+        </svg>
+      );
+    case "published":
+      return (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={common}
+          aria-hidden="true"
+        >
+          <path d="M20 6L9 17l-5-5" />
+        </svg>
+      );
+    case "rejected":
+      return (
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className={common}
+          aria-hidden="true"
+        >
+          <path d="M18 6L6 18" />
+          <path d="M6 6l12 12" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}
+
+/** Matches `ProfileQuoteCard` outer + inner card (Home feed uses the same palette/bg pattern). */
+function DashboardQuotePreview({
+  quote,
+  index,
+}: {
+  quote: {
+    text: string;
+    attribution: string;
+    backgroundId: string | null;
+    backgroundUrl: string | null;
+    fontPrimary: string | null;
+    colorPalette: string | null;
+  };
+  index: number;
+}) {
+  useGoogleFont(quote.fontPrimary);
+  const bgResolved = resolveQuoteBackground({
+    backgroundId: quote.backgroundId,
+    backgroundUrl: quote.backgroundUrl,
+  });
+
+  return (
+    <div
+      className={cn(
+        "rounded-4xl h-full relative flex items-center justify-center min-h-[440px] overflow-hidden p-8",
+        "max-md:p-6 max-sm:min-h-[260px]",
+        bgResolved.type === "none" ? "bg-[#ebebeb]" : "",
+      )}
+      style={
+        bgResolved.type === "preset" || bgResolved.type === "custom"
+          ? {
+              backgroundImage: `url(${bgResolved.src})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : bgResolved.type === "solid"
+            ? { backgroundColor: bgResolved.color }
+            : undefined
+      }
+    >
+      {(bgResolved.type === "preset" || bgResolved.type === "custom") && (
+        <div className="absolute inset-0 bg-black/22 rounded-[inherit]" />
+      )}
+
+      <div className="relative z-10 w-full flex items-center justify-center">
+        <div
+          className="group relative z-1 bg-card-bg text-card-text rounded-4xl p-4 max-w-97 w-full flex flex-col justify-between min-h-69 gap-4"
+          style={{
+            ...getCardPaletteStyle(quote, index),
+            fontFamily: quote.fontPrimary
+              ? `"${quote.fontPrimary}", serif`
+              : undefined,
+          }}
+        >
+          <div className="flex flex-col gap-4 w-full">
+            <blockquote className="text-lg font-medium leading-1.4 m-0">
+              {quote.text}
+            </blockquote>
+            <cite className="text-sm text-card-accent not-italic block">
+              {quote.attribution}
+            </cite>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 interface DashboardQuote {
   id: string;
@@ -11,6 +246,8 @@ interface DashboardQuote {
   attribution: string;
   socialHandles: string[];
   authorPhoto: string | null;
+  backgroundId: string | null;
+  backgroundUrl: string | null;
   fontPrimary: string | null;
   fontSecondary: string | null;
   colorPalette: string | null;
@@ -53,6 +290,13 @@ export default function DashboardClient({
   quotes: initialQuotes,
   stats,
 }: DashboardClientProps) {
+  const formatStatusLabel = (s: string) =>
+    s
+      .replace(/_/g, " ")
+      .toLowerCase()
+      .replace(/\b\w/g, (c) => c.toUpperCase());
+  const formatDate = (iso: string) => new Date(iso).toLocaleDateString();
+
   const [quotes, setQuotes] = useState(initialQuotes);
   const [filter, setFilter] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -116,38 +360,52 @@ export default function DashboardClient({
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-10">
           {[
-            { label: "Total", value: stats.total, color: "#111" },
+            { label: "Total", value: stats.total, color: "#111", icon: "total" },
             {
               label: "Pending",
               value: stats.pending,
               color: STATUS_COLORS.PENDING,
+              icon: "pending",
             },
             {
               label: "In Review",
               value: stats.inReview,
               color: STATUS_COLORS.IN_REVIEW,
+              icon: "review",
             },
             {
               label: "Published",
               value: stats.published,
               color: STATUS_COLORS.PUBLISHED,
+              icon: "published",
             },
             {
               label: "Rejected",
               value: stats.rejected,
               color: STATUS_COLORS.REJECTED,
+              icon: "rejected",
             },
           ].map((stat) => (
             <div
               key={stat.label}
-              className="bg-[#F8F8F8] rounded-2xl p-5"
+              className="bg-card-bg rounded-2xl p-5 border border-border"
             >
-              <p className="text-2xl font-light" style={{ color: stat.color }}>
-                {stat.value}
-              </p>
-              <p className="text-xs uppercase tracking-widest text-foreground/40 mt-1">
-                {stat.label}
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5">
+                  <StatIcon kind={stat.icon} />
+                </div>
+                <div className="min-w-0">
+                  <p
+                    className="text-2xl font-light tracking-tight"
+                    style={{ color: stat.color }}
+                  >
+                    {stat.value}
+                  </p>
+                  <p className="text-xs font-medium text-foreground/40 mt-1 tracking-normal">
+                    {stat.label}
+                  </p>
+                </div>
+              </div>
             </div>
           ))}
         </div>
@@ -156,7 +414,7 @@ export default function DashboardClient({
         <div className="flex gap-2 mb-8 flex-wrap">
           <button
             onClick={() => setFilter(null)}
-            className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
+            className={`px-4 py-2 text-xs font-medium tracking-normal rounded-full border transition-all cursor-pointer ${
               filter === null
                 ? "border-foreground bg-foreground text-background"
                 : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
@@ -170,161 +428,242 @@ export default function DashboardClient({
               <button
                 key={s}
                 onClick={() => setFilter(filter === s ? null : s)}
-                className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
+                className={`px-4 py-2 text-xs font-medium tracking-normal rounded-full border transition-all cursor-pointer ${
                   filter === s
-                    ? "border-current"
+                    ? "border-foreground/15 text-foreground"
                     : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
                 }`}
                 style={
                   filter === s
-                    ? { color: STATUS_COLORS[s], borderColor: STATUS_COLORS[s] }
+                    ? {
+                        color: STATUS_COLORS[s],
+                        borderColor: STATUS_COLORS[s],
+                        backgroundColor: `${STATUS_COLORS[s]}12`,
+                      }
                     : {}
                 }
               >
-                {s.replace("_", " ")} ({count})
+                {formatStatusLabel(s)} ({count})
               </button>
             );
           })}
         </div>
 
         {/* Quotes */}
-        <div className="space-y-2">
-          {filteredQuotes.map((quote) => (
-            <div
-              key={quote.id}
-              className="bg-[#F8F8F8] rounded-2xl overflow-hidden hover:bg-[#f0f0f0] transition-colors"
-            >
-              {/* Summary row */}
-              <div
-                className="flex items-center gap-4 px-5 py-4 cursor-pointer"
-                onClick={() =>
-                  setExpandedId(expandedId === quote.id ? null : quote.id)
-                }
-              >
-                <span
-                  className="w-2 h-2 rounded-full shrink-0"
-                  style={{
-                    backgroundColor: STATUS_COLORS[quote.status] || "#999",
-                  }}
-                />
-
-                <p className="flex-1 text-sm font-light truncate min-w-0">
-                  &ldquo;{quote.text}&rdquo;
-                </p>
-
-                <span className="text-xs text-foreground/40 shrink-0">
-                  — {quote.attribution}
-                </span>
-
-                <StatusBadge status={quote.status} className="shrink-0 text-[0.6rem] py-0.5" />
-                <span className="text-[0.6rem] text-foreground/30 shrink-0">
-                  {new Date(quote.createdAt).toLocaleDateString()}
-                </span>
-                <span className="text-foreground/30 text-xs">
-                  {expandedId === quote.id ? "▲" : "▼"}
-                </span>
-              </div>
-
-              {/* Expanded detail */}
-              {expandedId === quote.id && (
-                <div className="border-t border-foreground/5 px-5 py-5 space-y-4 bg-[#ebebeb]">
-                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
-                    <div>
-                      <span className="text-foreground/40 uppercase tracking-wider block mb-1">
-                        Attribution
-                      </span>
-                      <span>{quote.attribution}</span>
-                    </div>
-                    {quote.socialHandles?.length > 0 && (
-                      <div>
-                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
-                          Social
-                        </span>
-                        <span>{quote.socialHandles.join(", ")}</span>
-                      </div>
-                    )}
-                    {quote.mood && (
-                      <div>
-                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
-                          Mood
-                        </span>
-                        <span>{quote.mood}</span>
-                      </div>
-                    )}
-                    {quote.fontPrimary && (
-                      <div>
-                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
-                          Font
-                        </span>
-                        <span>{quote.fontPrimary}</span>
-                      </div>
-                    )}
-                    {quote.submitter && (
-                      <div>
-                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
-                          Submitter
-                        </span>
-                        <span>
-                          {quote.submitter.name} ({quote.submitter.email})
-                        </span>
-                      </div>
-                    )}
-                    {quote.curator && (
-                      <div>
-                        <span className="text-foreground/40 uppercase tracking-wider block mb-1">
-                          Curated by
-                        </span>
-                        <span>{quote.curator.name}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="text-sm font-light leading-relaxed p-4 bg-white rounded-xl">
-                    &ldquo;{quote.text}&rdquo;
-                  </div>
-
-                  {/* Status actions */}
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-xs text-foreground/40 uppercase tracking-wider mr-2">
-                      Set Status:
-                    </span>
-                    {STATUS_OPTIONS.map((s) => (
-                      <button
-                        key={s}
-                        disabled={quote.status === s || updatingId === quote.id}
-                        onClick={() => updateStatus(quote.id, s)}
-                        className="px-3 py-1.5 text-[0.65rem] uppercase tracking-widest rounded-full border border-foreground/10 text-foreground/50 hover:text-foreground hover:border-foreground/30 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
-                        style={
-                          quote.status === s
-                            ? {
-                                color: STATUS_COLORS[s],
-                                borderColor: STATUS_COLORS[s],
-                              }
-                            : {}
-                        }
-                      >
-                        {s.replace("_", " ")}
-                      </button>
-                    ))}
-
-                    <button
-                      onClick={() => deleteQuote(quote.id)}
-                      className="ml-auto px-3 py-1.5 text-[0.65rem] uppercase tracking-widest rounded-full border border-red-200 text-red-500 hover:bg-red-50 transition-all cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              )}
+        <div className="overflow-x-auto">
+          {filteredQuotes.length === 0 ? (
+            <div className="text-center py-20">
+              <p className="text-foreground/40">No quotes match this filter.</p>
             </div>
-          ))}
-        </div>
+          ) : (
+            <table className="w-full table-fixed border-separate border-spacing-0">
+              <thead>
+                <tr>
+                  <th className="text-left text-xs font-medium text-foreground/50 tracking-normal px-5 py-3 border-b border-border w-[420px] max-w-[560px]">
+                    Quote
+                  </th>
+                  <th className="text-left text-xs font-medium text-foreground/50 tracking-normal px-5 py-3 border-b border-border hidden md:table-cell">
+                    Submitter
+                  </th>
+                  <th className="text-left text-xs font-medium text-foreground/50 tracking-normal px-5 py-3 border-b border-border">
+                    Status
+                  </th>
+                  <th className="text-left text-xs font-medium text-foreground/50 tracking-normal px-5 py-3 border-b border-border hidden lg:table-cell">
+                    Date
+                  </th>
+                  <th className="w-16 px-5 py-3 border-b border-border" />
+                </tr>
+              </thead>
 
-        {filteredQuotes.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-foreground/40">No quotes match this filter.</p>
-          </div>
-        )}
+              <tbody>
+                {filteredQuotes.map((quote, index) => {
+                  const isExpanded = expandedId === quote.id;
+
+                  return (
+                    <Fragment key={quote.id}>
+                      <tr className="align-top hover:bg-card-bg/60 transition-colors">
+                      <td className="px-5 py-4 border-b border-border/50 w-[420px] max-w-[420px]">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-relaxed truncate">
+                              &ldquo;{quote.text}&rdquo;
+                            </p>
+                            <p className="text-xs text-foreground/40 font-medium mt-1 truncate">
+                              — {quote.attribution}
+                            </p>
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4 border-b border-border/50 hidden md:table-cell">
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {quote.submitter?.name ?? "—"}
+                            </p>
+                            <p className="text-xs text-foreground/40 font-medium truncate">
+                              {quote.submitter?.email ?? ""}
+                            </p>
+                          </div>
+                        </td>
+
+                        <td className="px-5 py-4 border-b border-border/50">
+                          <StatusBadge
+                            status={quote.status}
+                            className="text-[0.65rem] py-1"
+                          />
+                        </td>
+
+                        <td className="px-5 py-4 border-b border-border/50 hidden lg:table-cell">
+                          <span className="text-xs text-foreground/40 font-medium">
+                            {formatDate(quote.createdAt)}
+                          </span>
+                        </td>
+
+                        <td className="px-5 py-4 border-b border-border/50">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedId(isExpanded ? null : quote.id)
+                            }
+                            className="inline-flex items-center justify-center rounded-full border border-border bg-background/40 hover:bg-background transition-colors h-9 w-9 cursor-pointer"
+                            aria-label={
+                              isExpanded ? "Collapse details" : "Expand details"
+                            }
+                          >
+                            <ChevronDownIcon open={isExpanded} />
+                          </button>
+                        </td>
+                      </tr>
+
+                      {isExpanded && (
+                        <tr>
+                          <td
+                            colSpan={5}
+                            className="px-5 py-5 border-b border-border/50"
+                          >
+                            <div className="rounded-4xl border border-border bg-background p-5">
+                              <div className="grid lg:grid-cols-[1.15fr_0.85fr] gap-5">
+                                <div className="min-w-0">
+                                  <DashboardQuotePreview quote={quote} index={index} />
+                                </div>
+
+                                <div className="space-y-4">
+                                  <div className="grid grid-cols-2 gap-3 text-xs">
+                                    <div>
+                                      <span className="text-foreground/40 tracking-normal font-medium block mb-1">
+                                        Attribution
+                                      </span>
+                                      <span className="font-medium">{quote.attribution}</span>
+                                    </div>
+
+                                    {quote.socialHandles?.length ? (
+                                      <div className="col-span-2">
+                                        <span className="text-foreground/40 tracking-normal font-medium block mb-1">
+                                          Social
+                                        </span>
+                                        <span className="font-medium">
+                                          {quote.socialHandles.join(", ")}
+                                        </span>
+                                      </div>
+                                    ) : null}
+
+                                    {quote.mood ? (
+                                      <div>
+                                        <span className="text-foreground/40 tracking-normal font-medium block mb-1">
+                                          Mood
+                                        </span>
+                                        <span className="font-medium">{quote.mood}</span>
+                                      </div>
+                                    ) : null}
+
+                                    {quote.fontPrimary ? (
+                                      <div>
+                                        <span className="text-foreground/40 tracking-normal font-medium block mb-1">
+                                          Font
+                                        </span>
+                                        <span className="font-medium">{quote.fontPrimary}</span>
+                                      </div>
+                                    ) : null}
+
+                                    {quote.submitter ? (
+                                      <div className="col-span-2">
+                                        <span className="text-foreground/40 tracking-normal font-medium block mb-1">
+                                          Submitter
+                                        </span>
+                                        <span className="font-medium">
+                                          {quote.submitter.name} ({quote.submitter.email})
+                                        </span>
+                                      </div>
+                                    ) : null}
+
+                                    {quote.curator ? (
+                                      <div className="col-span-2">
+                                        <span className="text-foreground/40 tracking-normal font-medium block mb-1">
+                                          Curated by
+                                        </span>
+                                        <span className="font-medium">{quote.curator.name}</span>
+                                      </div>
+                                    ) : null}
+                                  </div>
+
+                                  <div className="pt-2">
+                                    <div className="flex items-center gap-3 flex-wrap">
+                                      <span className="inline-flex items-center gap-2 text-xs font-medium text-foreground/40">
+                                        <TagIcon className="text-foreground/50" />
+                                        Set Status
+                                      </span>
+
+                                      {STATUS_OPTIONS.map((s) => {
+                                        const isSame = quote.status === s;
+                                        const color = STATUS_COLORS[s];
+
+                                        return (
+                                          <button
+                                            key={s}
+                                            type="button"
+                                            disabled={
+                                              isSame || updatingId === quote.id
+                                            }
+                                            onClick={() =>
+                                              updateStatus(quote.id, s)
+                                            }
+                                            className="px-3 py-1.5 text-[0.65rem] font-medium tracking-normal rounded-full border border-foreground/10 text-foreground/50 hover:text-foreground hover:border-foreground/30 transition-all disabled:opacity-20 disabled:cursor-not-allowed cursor-pointer"
+                                            style={
+                                              isSame
+                                                ? {
+                                                    color,
+                                                    borderColor: color,
+                                                    backgroundColor: `${color}12`,
+                                                  }
+                                                : undefined
+                                            }
+                                          >
+                                            {formatStatusLabel(s)}
+                                          </button>
+                                        );
+                                      })}
+
+                                      <button
+                                        type="button"
+                                        onClick={() => deleteQuote(quote.id)}
+                                        className="ml-auto inline-flex items-center gap-2 px-3 py-1.5 text-[0.65rem] font-medium tracking-normal rounded-full border border-red-200 text-red-500 hover:bg-red-50 transition-all cursor-pointer"
+                                      >
+                                        <TrashIcon className="text-current/80" />
+                                        Delete
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );

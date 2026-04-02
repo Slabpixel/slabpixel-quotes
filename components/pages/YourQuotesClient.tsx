@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { BackToHome } from "@/components/BackToHome";
 import { STATUS_COLORS } from "@/lib/constants/quote-status";
 import StatusBadge from "@/components/StatusBadge";
+import { useSubmitQuoteModal } from "@/components/SubmitQuoteModalProvider";
 
 interface YourQuotesQuote {
   id: string;
@@ -30,6 +30,8 @@ export default function YourQuotesClient({
   user,
   quotes,
 }: YourQuotesClientProps) {
+  const { openSubmitModal } = useSubmitQuoteModal();
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-7xl mx-auto px-10 py-24 pt-32 max-lg:px-4 max-lg:pt-24 max-lg:pb-16">
@@ -87,24 +89,26 @@ export default function YourQuotesClient({
         {/* Action */}
         <div className="flex justify-between items-center mb-8">
           <h2 className="text-lg font-light">Your Submissions</h2>
-          <Link
-            href="/submit"
+          <button
+            type="button"
+            onClick={openSubmitModal}
             className="inline-flex items-center gap-2 text-sm font-medium text-foreground bg-[#ECECEC] rounded-full py-3 px-5 no-underline transition-opacity hover:opacity-85"
           >
             Submit New
-          </Link>
+          </button>
         </div>
 
         {/* Quotes list */}
         {quotes.length === 0 ? (
           <div className="text-center py-20">
             <p className="text-foreground/40 mb-4">No quotes submitted yet.</p>
-            <Link
-              href="/submit"
+            <button
+              type="button"
+              onClick={openSubmitModal}
               className="text-foreground text-sm hover:underline"
             >
               Submit your first quote &rarr;
-            </Link>
+            </button>
           </div>
         ) : (
           <div className="space-y-2">

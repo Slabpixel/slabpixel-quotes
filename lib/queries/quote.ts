@@ -37,7 +37,7 @@ function serializeRequiredDate(value: unknown, field: string): string {
 
 type DateLike = Date | string | null | undefined;
 
-/** Serialize a quote for feed (home/explore): socialHandles + publishedAt. */
+/** Serialize a quote for the public feed: socialHandles + publishedAt. */
 export function serializeQuoteForFeed<T extends { socialHandles?: unknown; publishedAt?: DateLike }>(
   q: T,
 ): Omit<T, "socialHandles" | "publishedAt"> & { socialHandles: string[]; publishedAt: string | null } {
@@ -142,6 +142,11 @@ export const quoteSelectForApiList = {
   },
 } as const;
 
+export const quoteSelectForProfileDrafts = {
+  ...quoteSelectForApiList,
+  status: true,
+} as const;
+
 export const quoteSelectForApiDetail = {
   id: true,
   text: true,
@@ -175,7 +180,7 @@ export type QuoteForFeed = Awaited<
   ReturnType<typeof prisma.quote.findMany<{ select: typeof quoteSelectForFeed }>>
 >[number];
 
-/** Fetch published quotes for home/explore feed. Returns serialized QuoteData[]. */
+/** Fetch published quotes for the public feed. Returns serialized QuoteData[]. */
 export async function getPublishedQuotesForFeed(limit = 24): Promise<QuoteData[]> {
   const cachedQuery = unstable_cache(
     async () =>
@@ -225,6 +230,18 @@ export async function getPublishedQuotesByUser(userId: string): Promise<QuoteDat
     where: { submitterId: userId, status: "PUBLISHED" },
     orderBy: { publishedAt: "desc" },
     select: quoteSelectForFeed,
+  });
+  return quotes.map(serializeQuoteForFeed);
+}
+
+/** Fetch drafts (non-published) for the profile draft preview. */
+export async function getDraftQuotesByUserForProfile(
+  userId: string,
+): Promise<QuoteData[]> {
+  const quotes = await prisma.quote.findMany({
+    where: { submitterId: userId, status: { not: "PUBLISHED" } },
+    orderBy: { createdAt: "desc" },
+    select: quoteSelectForProfileDrafts,
   });
   return quotes.map(serializeQuoteForFeed);
 }
