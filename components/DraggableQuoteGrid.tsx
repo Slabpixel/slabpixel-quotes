@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useCallback, useState } from "react";
 import gsap from "gsap";
+// @ts-ignore - GSAP's type declarations trigger a casing mismatch
+// between `Draggable.d.ts` and `draggable.d.ts` during build.
 import { Draggable } from "gsap/Draggable";
 import { type QuoteData } from "@/types/quote";
 import QuoteCard from "./QuoteCard";
