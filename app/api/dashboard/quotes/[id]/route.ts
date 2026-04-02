@@ -91,7 +91,7 @@ export async function PATCH(
   });
 
   if (existing.status === "PUBLISHED" || data.status === "PUBLISHED") {
-    revalidateTag(PUBLISHED_QUOTES_FEED_TAG);
+    revalidateTag(PUBLISHED_QUOTES_FEED_TAG, "max");
   }
 
   return NextResponse.json({ quote });
@@ -118,7 +118,7 @@ export async function DELETE(
   await prisma.quote.delete({ where: { id } });
 
   if (existing.status === "PUBLISHED") {
-    revalidateTag(PUBLISHED_QUOTES_FEED_TAG);
+    revalidateTag(PUBLISHED_QUOTES_FEED_TAG, "max");
   }
 
   return NextResponse.json({ success: true });
