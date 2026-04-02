@@ -10,6 +10,7 @@ import { resolveQuoteBackground } from "@/lib/quote-background";
 import { getCardPaletteStyle } from "@/lib/quote-presets";
 import { cn } from "@/lib/cn";
 import { useLenis } from "lenis/react";
+import { useSubmitQuoteModal } from "@/components/SubmitQuoteModalProvider";
 
 const QuoteOverlay = dynamic(() => import("@/components/QuoteOverlay"));
 const QuoteShareMenu = dynamic(async () => {
@@ -119,6 +120,7 @@ function Avatar({
 
 // ── Submit CTA card — first child of the feed list ────────────────────────
 function SubmitCard() {
+  const { openSubmitModal } = useSubmitQuoteModal();
   return (
     <div className="relative grid grid-cols-[1fr_1fr_6fr_1fr_1fr] gap-8 items-center max-lg:grid-cols-[1fr]">
       <div
@@ -134,16 +136,17 @@ function SubmitCard() {
 
       {/* Col 3: CTA card */}
       <div className="relative flex flex-col items-start justify-start overflow-hidden">
-        <Link
-          href="/submit"
+        <button
+          type="button"
           className="inline-flex items-center leading-none gap-2 text-sm font-medium text-foreground bg-[#ECECEC] rounded-full py-3 px-4 no-underline transition-opacity w-fit hover:opacity-85"
+          onClick={openSubmitModal}
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1.42188 10.5273C0.519531 9.43359 0 8.03906 0 6.5625C0 2.95312 3.14453 0 7 0C10.8555 0 14 2.95312 14 6.5625C14 10.1992 10.8555 13.125 7 13.125C6.01562 13.125 5.05859 12.9336 4.18359 12.5781L1.01172 13.9453C0.902344 14 0.820312 14 0.710938 14C0.300781 14 0 13.6992 0 13.3164C0 13.1797 0.0273438 13.0703 0.0820312 12.9609L1.42188 10.5273ZM2.43359 9.70703C2.76172 10.1172 2.81641 10.6914 2.57031 11.1562L2.07812 12.0586L3.69141 11.375C3.99219 11.2383 4.375 11.2383 4.70312 11.375C5.38672 11.6484 6.17969 11.8125 7 11.8125C10.2266 11.8125 12.6875 9.37891 12.6875 6.5625C12.6875 3.74609 10.2266 1.3125 7 1.3125C3.77344 1.3125 1.3125 3.74609 1.3125 6.5625C1.3125 7.73828 1.72266 8.80469 2.43359 9.70703Z" fill="black" />
           </svg>
 
           Submit a Quote
-        </Link>
+        </button>
       </div>
 
       {/* Col 4: empty */}
@@ -315,6 +318,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   } | null>(null);
 
   const lenis = useLenis();
+  const { isOpen: isSubmitModalOpen } = useSubmitQuoteModal();
   const PAGE_SIZE = 24;
   const [loadedQuotes, setLoadedQuotes] = useState<QuoteData[]>(quotes);
   const [currentPage, setCurrentPage] = useState(1);
@@ -373,12 +377,12 @@ export default function HomeClient({ quotes }: HomeClientProps) {
   // Pause Lenis when overlay is open
   useEffect(() => {
     if (!lenis) return;
-    if (selected) {
+    if (selected || isSubmitModalOpen) {
       lenis.stop();
     } else {
       lenis.start();
     }
-  }, [lenis, selected]);
+  }, [lenis, selected, isSubmitModalOpen]);
 
   const recomputeActiveCard = useCallback(() => {
     if (selected) return;
