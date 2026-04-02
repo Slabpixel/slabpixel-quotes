@@ -560,7 +560,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
 
   return (
     <div className="min-h-screen bg-background text-foreground no-scrollbar">
-      <div className="max-w-8xl mx-auto px-10 py-24 pt-[25vh] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
+      <div className="max-w-8xl mx-auto px-10 py-24 pt-[calc((100vh-532px)/2)] max-lg:px-2 max-lg:pt-20 max-lg:pb-16">
         <div className="relative">
           <div
             className="max-lg:hidden absolute top-4 bottom-0 w-px bg-muted pointer-events-none"
