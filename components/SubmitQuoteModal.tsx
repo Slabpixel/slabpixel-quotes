@@ -409,7 +409,9 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
 
   const solidBackgrounds = BACKGROUNDS.filter((b) => b.type === "solid");
   const imageBackgrounds = BACKGROUNDS.filter((b) => b.type === "image");
-  const myProfileHref = session?.user?.id ? `/profile/${session.user.id}` : "/profile";
+  const myProfileHref = session?.user?.id
+    ? `/profile/${session.user.id}?tab=draft`
+    : "/profile?tab=draft";
   const handleViewDraftStatus = () => {
     requestClose();
     window.setTimeout(() => {

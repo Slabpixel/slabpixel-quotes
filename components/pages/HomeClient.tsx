@@ -216,7 +216,7 @@ function FeedItem({
         }}
         onClick={handleClick}
         className={cn(
-          "rounded-4xl h-full relative flex items-center justify-center min-h-[320px] overflow-hidden p-8 cursor-pointer",
+          "rounded-4xl h-full relative flex items-center justify-center min-h-110 overflow-hidden p-8 cursor-pointer",
           "max-lg:row-start-1 max-lg:min-h-0 max-lg:px-8 max-lg:py-19",
           bgResolved.type === "none" ? "bg-[#ebebeb]" : "",
         )}
