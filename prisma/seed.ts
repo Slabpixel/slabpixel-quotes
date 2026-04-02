@@ -452,7 +452,12 @@ async function main() {
   ];
 
   for (const quote of sampleQuotes) {
-    await prisma.quote.create({ data: quote });
+    await prisma.quote.create({
+      data: {
+        ...quote,
+        socialHandles: JSON.stringify(quote.socialHandles),
+      },
+    });
   }
 
   const publishedCount = sampleQuotes.filter(
