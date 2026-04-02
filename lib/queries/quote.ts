@@ -37,7 +37,7 @@ function serializeRequiredDate(value: unknown, field: string): string {
 
 type DateLike = Date | string | null | undefined;
 
-/** Serialize a quote for feed (home/explore): socialHandles + publishedAt. */
+/** Serialize a quote for the public feed: socialHandles + publishedAt. */
 export function serializeQuoteForFeed<T extends { socialHandles?: unknown; publishedAt?: DateLike }>(
   q: T,
 ): Omit<T, "socialHandles" | "publishedAt"> & { socialHandles: string[]; publishedAt: string | null } {
@@ -175,7 +175,7 @@ export type QuoteForFeed = Awaited<
   ReturnType<typeof prisma.quote.findMany<{ select: typeof quoteSelectForFeed }>>
 >[number];
 
-/** Fetch published quotes for home/explore feed. Returns serialized QuoteData[]. */
+/** Fetch published quotes for the public feed. Returns serialized QuoteData[]. */
 export async function getPublishedQuotesForFeed(limit = 24): Promise<QuoteData[]> {
   const cachedQuery = unstable_cache(
     async () =>

@@ -426,7 +426,7 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
                 Close
               </ModalButton>
               <Link
-                href="/explore"
+                href="/"
                 onClick={() => handleAfterNavigation()}
                 className="px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-foreground/5 transition-colors"
               >
