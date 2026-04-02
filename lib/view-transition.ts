@@ -1,37 +1,23 @@
 export function slideInOutTransition() {
   if (typeof document === "undefined") return;
 
+  // Page-to-page: "blink" transition (instant hide/show), no smooth fade.
   document.documentElement.animate(
-    [
-      {
-        opacity: 1,
-        transform: "translateY(0)",
-      },
-      {
-        opacity: 0.2,
-        transform: "translateY(-35%)",
-      },
-    ],
+    [{ opacity: 1 }, { opacity: 0 }],
     {
-      duration: 1500,
-      easing: "cubic-bezier(0.87, 0, 0.13, 1)",
+      duration: 90,
+      // Step easing makes the opacity change effectively instantaneous.
+      easing: "steps(1, end)",
       fill: "forwards",
       pseudoElement: "::view-transition-old(root)",
     },
   );
 
   document.documentElement.animate(
-    [
-      {
-        clipPath: "polygon(0% 100%, 100% 100%, 100% 100%, 0% 100%)",
-      },
-      {
-        clipPath: "polygon(0% 100%, 100% 100%, 100% 0%, 0% 0%)",
-      },
-    ],
+    [{ opacity: 0 }, { opacity: 1 }],
     {
-      duration: 1500,
-      easing: "cubic-bezier(0.87, 0, 0.13, 1)",
+      duration: 90,
+      easing: "steps(1, end)",
       fill: "forwards",
       pseudoElement: "::view-transition-new(root)",
     },

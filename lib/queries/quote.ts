@@ -142,6 +142,11 @@ export const quoteSelectForApiList = {
   },
 } as const;
 
+export const quoteSelectForProfileDrafts = {
+  ...quoteSelectForApiList,
+  status: true,
+} as const;
+
 export const quoteSelectForApiDetail = {
   id: true,
   text: true,
@@ -225,6 +230,18 @@ export async function getPublishedQuotesByUser(userId: string): Promise<QuoteDat
     where: { submitterId: userId, status: "PUBLISHED" },
     orderBy: { publishedAt: "desc" },
     select: quoteSelectForFeed,
+  });
+  return quotes.map(serializeQuoteForFeed);
+}
+
+/** Fetch drafts (non-published) for the profile draft preview. */
+export async function getDraftQuotesByUserForProfile(
+  userId: string,
+): Promise<QuoteData[]> {
+  const quotes = await prisma.quote.findMany({
+    where: { submitterId: userId, status: { not: "PUBLISHED" } },
+    orderBy: { createdAt: "desc" },
+    select: quoteSelectForProfileDrafts,
   });
   return quotes.map(serializeQuoteForFeed);
 }

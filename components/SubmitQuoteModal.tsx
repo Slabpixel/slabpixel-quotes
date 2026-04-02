@@ -2,6 +2,7 @@
 
 import {
   useEffect,
+  useCallback,
   useRef,
   useState,
   type ChangeEvent,
@@ -22,6 +23,7 @@ import {
 import { SOCIAL_PLATFORMS } from "@/lib/social";
 import { submitQuoteSchema } from "@/lib/validations/quote";
 import { cn } from "@/lib/cn";
+import { useRouter } from "next/navigation";
 
 const DRAFT_KEY = "slabpixel-submit-draft";
 const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
@@ -123,6 +125,7 @@ function ModalButton({
 export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
   const { data: session } = useSession();
   const { openAuthModal } = useAuthModal();
+  const router = useRouter();
 
   const [text, setText] = useState("");
   const [attribution, setAttribution] = useState("");
@@ -141,8 +144,12 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
       Object.fromEntries(SOCIAL_PLATFORMS.map((p) => [p.key, ""])),
   );
 
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  type ModalState = "editing" | "submitting" | "success";
+  const [modalState, setModalState] = useState<ModalState>("editing");
+  const [animateIn, setAnimateIn] = useState(false);
+  const CLOSE_ANIMATION_MS = 240;
+  const [isExiting, setIsExiting] = useState(false);
+  const closeTimeoutRef = useRef<number | null>(null);
   const [agreedToLegal, setAgreedToLegal] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<SubmitFieldErrors>({});
@@ -151,8 +158,33 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
   const backgroundFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    return () => {
+      if (closeTimeoutRef.current) {
+        window.clearTimeout(closeTimeoutRef.current);
+        closeTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const requestClose = useCallback(() => {
+    // Don't allow closing while the submit request is running.
+    if (modalState === "submitting") return;
+    if (isExiting) return;
+    setIsExiting(true);
+    closeTimeoutRef.current = window.setTimeout(() => {
+      onClose();
+    }, CLOSE_ANIMATION_MS);
+  }, [CLOSE_ANIMATION_MS, isExiting, modalState, onClose]);
+
+  useEffect(() => {
     setAttribution(session?.user?.name ?? "");
   }, [session?.user?.name]);
+
+  // Entry animation: grow from a small card into place.
+  useEffect(() => {
+    const id = window.requestAnimationFrame(() => setAnimateIn(true));
+    return () => window.cancelAnimationFrame(id);
+  }, []);
 
   useEffect(() => {
     const saved = localStorage.getItem(DRAFT_KEY);
@@ -198,11 +230,11 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
     const handler = (e: KeyboardEvent) => {
       if (e.key !== "Escape") return;
       e.preventDefault();
-      onClose();
+      requestClose();
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [requestClose]);
 
   const saveDraftBeforeGoogleSignIn = () => {
     localStorage.setItem(
@@ -329,7 +361,9 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
 
     setFieldErrors({});
 
-    setIsSubmitting(true);
+    // Immediately shrink into the loading state (nice UX), while the request runs.
+    setModalState("submitting");
+    const submitStartTs = Date.now();
     setError(null);
     setFieldErrors({});
 
@@ -354,11 +388,17 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
         );
       }
 
-      setIsSubmitted(true);
+      // Ensure the shrink->success motion feels intentional even on fast networks.
+      const elapsed = Date.now() - submitStartTs;
+      const minLoadingMs = 260;
+      if (elapsed < minLoadingMs) {
+        await new Promise((r) => window.setTimeout(r, minLoadingMs - elapsed));
+      }
+
+      setModalState("success");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setIsSubmitting(false);
+      setModalState("editing");
     }
   };
 
@@ -369,29 +409,50 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
 
   const solidBackgrounds = BACKGROUNDS.filter((b) => b.type === "solid");
   const imageBackgrounds = BACKGROUNDS.filter((b) => b.type === "image");
-
-  const handleAfterNavigation = () => {
-    // Ensure the modal closes immediately for better UX.
-    onClose();
+  const myProfileHref = session?.user?.id ? `/profile/${session.user.id}` : "/profile";
+  const handleViewDraftStatus = () => {
+    requestClose();
+    window.setTimeout(() => {
+      router.push(myProfileHref);
+    }, CLOSE_ANIMATION_MS + 20);
   };
 
   const panel = (
     <div
       className="fixed inset-0 z-[220] flex items-center justify-center bg-black/50 px-4 py-4"
-      onClick={onClose}
+      onClick={() => {
+        requestClose();
+      }}
       role="dialog"
       aria-modal="true"
       aria-label="Submit a Quote"
     >
       <div
-        className="relative w-full max-w-[1200px] h-[90vh] max-h-[90vh] overflow-hidden rounded-3xl bg-background text-foreground shadow-[0_18px_80px_rgba(0,0,0,0.45)] border border-border"
+        className="relative w-full max-w-[1200px] h-[90vh] max-h-[90vh] overflow-hidden rounded-3xl bg-background text-foreground shadow-[0_18px_80px_rgba(0,0,0,0.45)] border border-border transform-gpu will-change-transform"
         onClick={(e) => e.stopPropagation()}
+        style={{
+          pointerEvents: isExiting ? "none" : "auto",
+          transform: `translateY(${
+            isExiting ? 10 : modalState === "submitting" ? 0 : animateIn ? 0 : 10
+          }px) scale(${
+            isExiting ? 0.6 : modalState === "submitting" ? 0.6 : animateIn ? 1 : 0.86
+          })`,
+          opacity: isExiting ? 0 : animateIn ? 1 : 0,
+          borderRadius:
+            isExiting || modalState === "submitting" ? 18 : undefined,
+          transition: isExiting
+            ? "transform 220ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 180ms ease, border-radius 220ms ease"
+            : "transform 420ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 240ms ease, border-radius 360ms ease",
+        }}
       >
         <button
           type="button"
-          onClick={onClose}
+          disabled={modalState === "submitting" || isExiting}
+          onClick={() => {
+            requestClose();
+          }}
           aria-label="Close submit popup"
-          className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full border border-border bg-background/70 backdrop-blur flex items-center justify-center text-foreground/80 hover:bg-background"
+          className="absolute top-4 right-4 z-20 h-10 w-10 rounded-full border border-border bg-background/70 backdrop-blur flex items-center justify-center text-foreground/80 hover:bg-background disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
             <path
@@ -403,504 +464,511 @@ export function SubmitQuoteModal({ onClose }: { onClose: () => void }) {
           </svg>
         </button>
 
-        {isSubmitted ? (
+        {modalState === "success" ? (
           <div className="h-full flex flex-col items-center justify-center bg-background text-center px-6 pt-16">
             <div className="text-5xl text-foreground">&#x2713;</div>
             <h1 className="text-2xl font-light text-foreground tracking-tight mt-3">
-              Quote Submitted
+              Congratulations!
             </h1>
             <p className="text-foreground/50 max-w-md mt-3 text-sm">
-              Your quote has been submitted for review. Our team will curate it
-              and, if approved, transform it into a visual artifact.
+              Your quote is submitted. Our internal team will review it, and if
+              approved, transform it into a visual artifact.
             </p>
-            {error && (
-              <div className="text-red-600 text-sm mt-4 p-3 rounded-xl bg-red-50 border border-red-200">
-                {error}
-              </div>
-            )}
             <div className="flex flex-wrap gap-3 justify-center pt-6">
               <ModalButton
-                onClick={() => onClose()}
+                onClick={requestClose}
                 className="bg-white border border-border text-foreground/70 hover:bg-white/80"
               >
-                Close
+                Confirm
               </ModalButton>
-              <Link
-                href="/"
-                onClick={() => handleAfterNavigation()}
-                className="px-6 py-3 text-sm font-medium text-foreground border border-border rounded-full hover:bg-foreground/5 transition-colors"
-              >
-                Back to Grid
-              </Link>
-              <Link
-                href="/your-quotes"
-                onClick={() => handleAfterNavigation()}
+              <button
+                type="button"
+                onClick={handleViewDraftStatus}
                 className="px-6 py-3 text-sm font-medium text-background bg-foreground rounded-full hover:bg-foreground/90 transition-colors"
               >
-                My Submissions
-              </Link>
+                View draft status
+              </button>
             </div>
           </div>
         ) : (
           <div className="flex h-full min-h-0 flex-col lg:flex-row">
-            {/* ── Left: fixed preview ─────────────────────────────── */}
-            <div className="w-full lg:w-1/2 h-[42vh] lg:h-full flex-none min-h-0 overflow-hidden bg-background p-2">
-              <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl lg:rounded-4xl">
-                {bgPreview.type === "preset" || bgPreview.type === "custom" ? (
-                  <>
-                    <Image
-                      src={bgPreview.src}
-                      alt={bgPreview.label ?? "Background"}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 1024px) 100vw, 50vw"
-                    />
-                    <div className="absolute inset-0 bg-black/22" />
-                  </>
-                ) : bgPreview.type === "solid" ? (
-                  <div
-                    className="absolute inset-0"
-                    style={{ backgroundColor: bgPreview.color }}
+            {modalState === "submitting" ? (
+              <div className="w-full h-full flex items-center justify-center bg-background text-center px-10">
+                <div className="flex flex-col items-center">
+                  <span
+                    className="size-10 inline-block animate-spin rounded-full border-2 border-foreground/20 border-t-foreground"
+                    aria-hidden
                   />
-                ) : (
-                  <div className="absolute inset-0 bg-[#ebebeb]" />
-                )}
-
-                <div
-                  className="relative z-10 mx-3 flex w-full max-w-97 flex-col justify-between gap-4 rounded-2xl bg-card-bg text-card-text p-4 min-h-52 max-lg:gap-3 max-lg:min-h-52 lg:mx-8 lg:min-h-69 lg:rounded-4xl lg:p-6"
-                  style={{
-                    ...getCardPaletteStyle(
-                      {
-                        colorPalette:
-                          selectedPalette !== null
-                            ? JSON.stringify(PALETTE_PRESETS[selectedPalette].colors)
-                            : null,
-                      },
-                      0,
-                    ),
-                    fontFamily: fontPrimary ? `"${fontPrimary}", serif` : undefined,
-                  }}
-                >
-                  <div className="flex flex-col gap-2">
-                    <textarea
-                      ref={textareaRef}
-                      value={text}
-                      onChange={(e) => {
-                        setText(e.target.value);
-                        if (fieldErrors.text) {
-                          setFieldErrors((prev) => ({
-                            ...prev,
-                            text: undefined,
-                          }));
-                        }
-                      }}
-                      placeholder="Your quotes will appear here..."
-                      maxLength={500}
-                      rows={1}
-                      className="w-full bg-transparent scrollbar-hide border-0 outline-none resize-none text-lg font-medium leading-relaxed placeholder:text-card-muted/70 p-0 max-lg:text-base"
-                    />
-                    <input
-                      value={attribution}
-                      readOnly
-                      placeholder={session?.user?.name ?? "Name"}
-                      maxLength={100}
-                      className="w-full bg-transparent border-0 outline-none text-sm text-card-muted placeholder:text-card-muted/70 p-0"
-                    />
-                    {fieldErrors.text && (
-                      <p className="text-xs text-red-600">{fieldErrors.text}</p>
-                    )}
-                    {fieldErrors.attribution && (
-                      <p className="text-xs text-red-600">
-                        {fieldErrors.attribution}
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Right: scrollable options ─────────────────────── */}
-            <div
-              data-lenis-prevent-wheel
-              data-lenis-prevent-touch
-              className="w-full lg:w-1/2 flex-1 min-h-0 overflow-y-auto [-webkit-overflow-scrolling:touch]"
-            >
-              <div className="mx-auto max-w-xl space-y-10 px-12 pb-16 pt-16 max-lg:space-y-8 max-lg:px-4 max-lg:pt-10">
-                <div>
-                  <h1 className="text-3xl font-semibold tracking-tight text-foreground max-lg:text-2xl">
-                    Submit a Quote
-                  </h1>
-                  <p className="text-foreground/50 mt-2 text-sm">
-                    Share words that matter. Shape how they look and feel.
+                  <h2 className="text-lg font-light text-foreground mt-4">
+                    Creating your quote...
+                  </h2>
+                  <p className="text-sm text-foreground/50 mt-2">
+                    Preparing it for internal review.
                   </p>
                 </div>
+              </div>
+            ) : (
+              <>
+                {/* ── Left: fixed preview ─────────────────────────────── */}
+                <div className="w-full lg:w-1/2 h-[42vh] lg:h-full flex-none min-h-0 overflow-hidden bg-background p-2">
+                  <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl lg:rounded-4xl">
+                    {bgPreview.type === "preset" || bgPreview.type === "custom" ? (
+                      <>
+                        <Image
+                          src={bgPreview.src}
+                          alt={bgPreview.label ?? "Background"}
+                          fill
+                          className="object-cover"
+                          sizes="(max-width: 1024px) 100vw, 50vw"
+                        />
+                        <div className="absolute inset-0 bg-black/22" />
+                      </>
+                    ) : bgPreview.type === "solid" ? (
+                      <div
+                        className="absolute inset-0"
+                        style={{ backgroundColor: bgPreview.color }}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-[#ebebeb]" />
+                    )}
 
-                {error && (
-                  <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-                    {error}
-                  </div>
-                )}
-
-                {/* Font Styles */}
-                <section>
-                  <h3 className="text-sm text-foreground/40 mb-4">
-                    Font Styles
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {FONT_OPTIONS.map((f) => (
-                      <button
-                        key={f.value}
-                        type="button"
-                        onClick={() =>
-                          setFontPrimary(
-                            fontPrimary === f.value ? null : f.value,
-                          )
-                        }
-                        className={cn(
-                          "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
-                          fontPrimary === f.value
-                            ? "border-foreground bg-foreground text-white"
-                            : "border-border text-foreground hover:border-foreground/30",
+                    <div
+                      className="relative z-10 mx-3 flex w-full max-w-97 flex-col justify-between gap-4 rounded-2xl bg-card-bg text-card-text p-4 min-h-52 max-lg:gap-3 max-lg:min-h-52 lg:mx-8 lg:min-h-69 lg:rounded-4xl lg:p-6"
+                      style={{
+                        ...getCardPaletteStyle(
+                          {
+                            colorPalette:
+                              selectedPalette !== null
+                                ? JSON.stringify(PALETTE_PRESETS[selectedPalette].colors)
+                                : null,
+                          },
+                          0,
+                        ),
+                        fontFamily: fontPrimary ? `"${fontPrimary}", serif` : undefined,
+                      }}
+                    >
+                      <div className="flex flex-col gap-2">
+                        <textarea
+                          ref={textareaRef}
+                          value={text}
+                          onChange={(e) => {
+                            setText(e.target.value);
+                            if (fieldErrors.text) {
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                text: undefined,
+                              }));
+                            }
+                          }}
+                          placeholder="Your quotes will appear here..."
+                          maxLength={500}
+                          rows={1}
+                          className="w-full bg-transparent scrollbar-hide border-0 outline-none resize-none text-lg font-medium leading-relaxed placeholder:text-card-muted/70 p-0 max-lg:text-base"
+                        />
+                        <input
+                          value={attribution}
+                          readOnly
+                          placeholder={session?.user?.name ?? "Name"}
+                          maxLength={100}
+                          className="w-full bg-transparent border-0 outline-none text-sm text-card-muted placeholder:text-card-muted/70 p-0"
+                        />
+                        {fieldErrors.text && (
+                          <p className="text-xs text-red-600">{fieldErrors.text}</p>
                         )}
-                        style={{ fontFamily: `"${f.value}", serif` }}
-                      >
-                        {f.display}
-                      </button>
-                    ))}
-                  </div>
-                </section>
-
-                {/* Card Theme */}
-                <section>
-                  <h3 className="text-sm text-foreground/40 mb-4">
-                    Card Theme
-                  </h3>
-                  <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-lg:gap-2">
-                    {PALETTE_PRESETS.map((p, idx) => (
-                      <button
-                        key={p.name}
-                        type="button"
-                        onClick={() =>
-                          setSelectedPalette(
-                            selectedPalette === idx ? null : idx,
-                          )
-                        }
-                        className={cn(
-                          "flex flex-col items-center gap-2.5 p-4 rounded-xl border transition-all cursor-pointer",
-                          selectedPalette === idx
-                            ? "border-foreground"
-                            : "border-border hover:border-foreground/20",
+                        {fieldErrors.attribution && (
+                          <p className="text-xs text-red-600">
+                            {fieldErrors.attribution}
+                          </p>
                         )}
-                      >
-                        <div className="flex items-center gap-1.5">
-                          {p.colors.map((c, ci) => (
-                            <div
-                              key={ci}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* ── Right: scrollable options ─────────────────────── */}
+                <div
+                  data-lenis-prevent-wheel
+                  data-lenis-prevent-touch
+                  className="w-full lg:w-1/2 flex-1 min-h-0 overflow-y-auto [-webkit-overflow-scrolling:touch]"
+                >
+                  <div className="mx-auto max-w-xl space-y-10 px-12 pb-16 pt-16 max-lg:space-y-8 max-lg:px-4 max-lg:pt-10">
+                    <div>
+                      <h1 className="text-3xl font-semibold tracking-tight text-foreground max-lg:text-2xl">
+                        Submit a Quote
+                      </h1>
+                      <p className="text-foreground/50 mt-2 text-sm">
+                        Share words that matter. Shape how they look and feel.
+                      </p>
+                    </div>
+
+                    {error && (
+                      <div className="p-4 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                        {error}
+                      </div>
+                    )}
+
+                    {/* Font Styles */}
+                    <section>
+                      <h3 className="text-sm text-foreground/40 mb-4">
+                        Font Styles
+                      </h3>
+                      <div className="flex flex-wrap gap-2">
+                        {FONT_OPTIONS.map((f) => (
+                          <button
+                            key={f.value}
+                            type="button"
+                            onClick={() =>
+                              setFontPrimary(
+                                fontPrimary === f.value ? null : f.value,
+                              )
+                            }
+                            className={cn(
+                              "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
+                              fontPrimary === f.value
+                                ? "border-foreground bg-foreground text-white"
+                                : "border-border text-foreground hover:border-foreground/30",
+                            )}
+                            style={{ fontFamily: `"${f.value}", serif` }}
+                          >
+                            {f.display}
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Card Theme */}
+                    <section>
+                      <h3 className="text-sm text-foreground/40 mb-4">
+                        Card Theme
+                      </h3>
+                      <div className="grid grid-cols-3 gap-3 max-lg:grid-cols-2 max-lg:gap-2">
+                        {PALETTE_PRESETS.map((p, idx) => (
+                          <button
+                            key={p.name}
+                            type="button"
+                            onClick={() =>
+                              setSelectedPalette(
+                                selectedPalette === idx ? null : idx,
+                              )
+                            }
+                            className={cn(
+                              "flex flex-col items-center gap-2.5 p-4 rounded-xl border transition-all cursor-pointer",
+                              selectedPalette === idx
+                                ? "border-foreground"
+                                : "border-border hover:border-foreground/20",
+                            )}
+                          >
+                            <div className="flex items-center gap-1.5">
+                              {p.colors.map((c, ci) => (
+                                <div
+                                  key={ci}
+                                  className={cn(
+                                    "rounded-full border border-black/5",
+                                    ci === 0 ? "w-6 h-6" : "w-5 h-5",
+                                  )}
+                                  style={{ backgroundColor: c }}
+                                />
+                              ))}
+                            </div>
+                            <span className="text-xs text-foreground/50">{p.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </section>
+
+                    {/* Background Theme */}
+                    <section>
+                      <h3 className="text-sm text-foreground/40 mb-4">
+                        Background Theme
+                      </h3>
+                      <div className="inline-flex rounded-xl border border-border p-1 mb-4">
+                        {(
+                          [
+                            ["solid", "Solid Color"],
+                            ["image", "Background Image"],
+                            ["upload", "Upload Image"],
+                          ] as const
+                        ).map(([key, label]) => (
+                          <button
+                            key={key}
+                            type="button"
+                            onClick={() => setBackgroundTab(key)}
+                            className={cn(
+                              "px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
+                              backgroundTab === key
+                                ? "bg-foreground text-background"
+                                : "text-foreground/60 hover:text-foreground",
+                            )}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+
+                      <input
+                        ref={backgroundFileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        className="hidden"
+                        onChange={handleBackgroundFile}
+                      />
+
+                      {backgroundTab === "upload" && (
+                        <div className="mb-4">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <button
+                              type="button"
+                              disabled={backgroundUploading}
+                              onClick={() =>
+                                backgroundFileInputRef.current?.click()
+                              }
                               className={cn(
-                                "rounded-full border border-black/5",
-                                ci === 0 ? "w-6 h-6" : "w-5 h-5",
+                                "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
+                                "border-border text-foreground hover:border-foreground/30",
+                                backgroundUploading &&
+                                  "opacity-50 cursor-not-allowed",
                               )}
-                              style={{ backgroundColor: c }}
+                            >
+                              {backgroundUploading ? (
+                                <span className="inline-flex items-center gap-2">
+                                  <span
+                                    className="size-4 inline-block animate-spin rounded-full border-2 border-foreground/40 border-t-foreground"
+                                    aria-hidden
+                                  />
+                                  Uploading…
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-2">
+                                  <svg
+                                    width="16"
+                                    height="16"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden
+                                  >
+                                    <path
+                                      d="M12 16V4"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                    />
+                                    <path
+                                      d="M7 9L12 4L17 9"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                    <path
+                                      d="M20 16.5V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2.5"
+                                      stroke="currentColor"
+                                      strokeWidth="2"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                    />
+                                  </svg>
+                                  Upload
+                                </span>
+                              )}
+                            </button>
+                            {backgroundUploadUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setBackgroundUploadUrl(null)}
+                                className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
+                              >
+                                Remove upload
+                              </button>
+                            )}
+                          </div>
+
+                          {backgroundUploadUrl && (
+                            <div className="mt-3 relative w-full aspect-video rounded-xl border border-border overflow-hidden bg-[#f5f5f5]">
+                              <Image
+                                src={backgroundUploadUrl}
+                                alt="Uploaded background preview"
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 1024px) 100vw, 50vw"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {backgroundTab === "solid" && (
+                        <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
+                          {solidBackgrounds.map((b) => (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => {
+                                setBackgroundUploadUrl(null);
+                                setSelectedBackground(
+                                  selectedBackground === b.id ? null : b.id,
+                                );
+                              }}
+                              className={cn(
+                                "aspect-square rounded-xl border-2 overflow-hidden transition-all cursor-pointer relative",
+                                selectedBackground === b.id && !backgroundUploadUrl
+                                  ? "border-foreground"
+                                  : "border-transparent hover:border-foreground/20",
+                              )}
+                              style={{ backgroundColor: b.color }}
                             />
                           ))}
                         </div>
-                        <span className="text-xs text-foreground/50">{p.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </section>
+                      )}
 
-                {/* Background Theme */}
-                <section>
-                  <h3 className="text-sm text-foreground/40 mb-4">
-                    Background Theme
-                  </h3>
-                  <div className="inline-flex rounded-xl border border-border p-1 mb-4">
-                    {(
-                      [
-                        ["solid", "Solid Color"],
-                        ["image", "Background Image"],
-                        ["upload", "Upload Image"],
-                      ] as const
-                    ).map(([key, label]) => (
-                      <button
-                        key={key}
-                        type="button"
-                        onClick={() => setBackgroundTab(key)}
-                        className={cn(
-                          "px-3 py-1.5 text-xs rounded-lg transition-colors cursor-pointer",
-                          backgroundTab === key
-                            ? "bg-foreground text-background"
-                            : "text-foreground/60 hover:text-foreground",
-                        )}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-
-                  <input
-                    ref={backgroundFileInputRef}
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    className="hidden"
-                    onChange={handleBackgroundFile}
-                  />
-
-                  {backgroundTab === "upload" && (
-                    <div className="mb-4">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <button
-                          type="button"
-                          disabled={backgroundUploading}
-                          onClick={() =>
-                            backgroundFileInputRef.current?.click()
-                          }
-                          className={cn(
-                            "px-4 py-2 text-sm rounded-lg border transition-all cursor-pointer",
-                            "border-border text-foreground hover:border-foreground/30",
-                            backgroundUploading &&
-                              "opacity-50 cursor-not-allowed",
-                          )}
-                        >
-                          {backgroundUploading ? (
-                            <span className="inline-flex items-center gap-2">
-                              <span
-                                className="size-4 inline-block animate-spin rounded-full border-2 border-foreground/40 border-t-foreground"
-                                aria-hidden
+                      {backgroundTab === "image" && (
+                        <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
+                          {imageBackgrounds.map((b) => (
+                            <button
+                              key={b.id}
+                              type="button"
+                              onClick={() => {
+                                setBackgroundUploadUrl(null);
+                                setSelectedBackground(
+                                  selectedBackground === b.id ? null : b.id,
+                                );
+                              }}
+                              className={cn(
+                                "aspect-square rounded-xl border-2 overflow-hidden bg-[#f5f5f5] transition-all cursor-pointer relative",
+                                selectedBackground === b.id && !backgroundUploadUrl
+                                  ? "border-foreground"
+                                  : "border-transparent hover:border-foreground/20",
+                              )}
+                            >
+                              <Image
+                                src={b.src ?? "/backgrounds/abstract-01.jpg"}
+                                alt={b.label}
+                                fill
+                                className="object-cover"
+                                sizes="80px"
                               />
-                              Uploading…
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-2">
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                xmlns="http://www.w3.org/2000/svg"
-                                aria-hidden
-                              >
-                                <path
-                                  d="M12 16V4"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                />
-                                <path
-                                  d="M7 9L12 4L17 9"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                                <path
-                                  d="M20 16.5V19a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-2.5"
-                                  stroke="currentColor"
-                                  strokeWidth="2"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                />
-                              </svg>
-                              Upload
-                            </span>
-                          )}
-                        </button>
-                        {backgroundUploadUrl && (
-                          <button
-                            type="button"
-                            onClick={() => setBackgroundUploadUrl(null)}
-                            className="px-4 py-2 text-sm rounded-lg border border-border text-foreground/70 hover:text-foreground"
-                          >
-                            Remove upload
-                          </button>
-                        )}
-                      </div>
-
-                      {backgroundUploadUrl && (
-                        <div className="mt-3 relative w-full aspect-video rounded-xl border border-border overflow-hidden bg-[#f5f5f5]">
-                          <Image
-                            src={backgroundUploadUrl}
-                            alt="Uploaded background preview"
-                            fill
-                            className="object-cover"
-                            sizes="(max-width: 1024px) 100vw, 50vw"
-                          />
+                            </button>
+                          ))}
                         </div>
                       )}
-                    </div>
-                  )}
+                    </section>
 
-                  {backgroundTab === "solid" && (
-                    <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
-                      {solidBackgrounds.map((b) => (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onClick={() => {
-                            setBackgroundUploadUrl(null);
-                            setSelectedBackground(
-                              selectedBackground === b.id ? null : b.id,
-                            );
-                          }}
-                          className={cn(
-                            "aspect-square rounded-xl border-2 overflow-hidden transition-all cursor-pointer relative",
-                            selectedBackground === b.id && !backgroundUploadUrl
-                              ? "border-foreground"
-                              : "border-transparent hover:border-foreground/20",
-                          )}
-                          style={{ backgroundColor: b.color }}
-                        />
-                      ))}
-                    </div>
-                  )}
-
-                  {backgroundTab === "image" && (
-                    <div className="grid grid-cols-4 gap-3 max-lg:grid-cols-3 max-lg:gap-2">
-                      {imageBackgrounds.map((b) => (
-                        <button
-                          key={b.id}
-                          type="button"
-                          onClick={() => {
-                            setBackgroundUploadUrl(null);
-                            setSelectedBackground(
-                              selectedBackground === b.id ? null : b.id,
-                            );
-                          }}
-                          className={cn(
-                            "aspect-square rounded-xl border-2 overflow-hidden bg-[#f5f5f5] transition-all cursor-pointer relative",
-                            selectedBackground === b.id && !backgroundUploadUrl
-                              ? "border-foreground"
-                              : "border-transparent hover:border-foreground/20",
-                          )}
-                        >
-                          <Image
-                            src={b.src ?? "/backgrounds/abstract-01.jpg"}
-                            alt={b.label}
-                            fill
-                            className="object-cover"
-                            sizes="80px"
-                          />
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                {/* Social Media */}
-                <section>
-                  <h3 className="text-sm text-foreground/40 mb-4">
-                    Social Media
-                  </h3>
-                  {fieldErrors.socialHandles && (
-                    <p className="text-xs text-red-600 mb-2">
-                      {fieldErrors.socialHandles}
-                    </p>
-                  )}
-                  <div className="flex flex-col gap-3">
-                    {SOCIAL_PLATFORMS.map((platform) => (
-                      <div
-                        key={platform.key}
-                        className={cn(
-                          "flex items-center gap-3 border rounded-xl px-4 py-3 transition-colors",
-                          socialHandles[platform.key]?.trim()
-                            ? "border-foreground/20"
-                            : "border-border",
-                        )}
-                      >
-                        <svg
-                          viewBox="0 0 24 24"
-                          className="w-5 h-5 shrink-0 text-foreground/40"
-                          fill="currentColor"
-                        >
-                          <path d={platform.iconPath} />
-                        </svg>
-                        <input
-                          value={socialHandles[platform.key]}
-                          onChange={(e) =>
-                            setSocialHandles((prev) => ({
-                              ...prev,
-                              [platform.key]: e.target.value,
-                            }))
-                          }
-                          placeholder={platform.placeholder}
-                          maxLength={200}
-                          className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-foreground/30"
-                        />
-                        {socialHandles[platform.key]?.trim() && (
-                          <svg
-                            className="w-5 h-5 shrink-0 text-foreground/40"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                    {/* Social Media */}
+                    <section>
+                      <h3 className="text-sm text-foreground/40 mb-4">
+                        Social Media
+                      </h3>
+                      {fieldErrors.socialHandles && (
+                        <p className="text-xs text-red-600 mb-2">
+                          {fieldErrors.socialHandles}
+                        </p>
+                      )}
+                      <div className="flex flex-col gap-3">
+                        {SOCIAL_PLATFORMS.map((platform) => (
+                          <div
+                            key={platform.key}
+                            className={cn(
+                              "flex items-center gap-3 border rounded-xl px-4 py-3 transition-colors",
+                              socialHandles[platform.key]?.trim()
+                                ? "border-foreground/20"
+                                : "border-border",
+                            )}
                           >
-                            <path
-                              fillRule="evenodd"
-                              d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                              clipRule="evenodd"
+                            <svg
+                              viewBox="0 0 24 24"
+                              className="w-5 h-5 shrink-0 text-foreground/40"
+                              fill="currentColor"
+                            >
+                              <path d={platform.iconPath} />
+                            </svg>
+                            <input
+                              value={socialHandles[platform.key]}
+                              onChange={(e) =>
+                                setSocialHandles((prev) => ({
+                                  ...prev,
+                                  [platform.key]: e.target.value,
+                                }))
+                              }
+                              placeholder={platform.placeholder}
+                              maxLength={200}
+                              className="flex-1 bg-transparent outline-none text-sm text-foreground placeholder:text-foreground/30"
                             />
-                          </svg>
-                        )}
+                            {socialHandles[platform.key]?.trim() && (
+                              <svg
+                                className="w-5 h-5 shrink-0 text-foreground/40"
+                                viewBox="0 0 20 20"
+                                fill="currentColor"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            )}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </section>
+                    </section>
 
-                {/* Submit */}
-                <div className="space-y-2">
-                  <label className="flex items-start gap-2 text-sm text-foreground/70">
-                    <input
-                      type="checkbox"
-                      checked={agreedToLegal}
-                      onChange={(e) => {
-                        setAgreedToLegal(e.target.checked);
-                        if (fieldErrors.consent) {
-                          setFieldErrors((prev) => ({
-                            ...prev,
-                            consent: undefined,
-                          }));
+                    {/* Submit */}
+                    <div className="space-y-2">
+                      <label className="flex items-start gap-2 text-sm text-foreground/70">
+                        <input
+                          type="checkbox"
+                          checked={agreedToLegal}
+                          onChange={(e) => {
+                            setAgreedToLegal(e.target.checked);
+                            if (fieldErrors.consent) {
+                              setFieldErrors((prev) => ({
+                                ...prev,
+                                consent: undefined,
+                              }));
+                            }
+                          }}
+                          className="mt-0.5"
+                        />
+                        <span>
+                          I agree to the{" "}
+                          <Link href="/terms" className="underline">
+                            Terms and Conditions
+                          </Link>{" "}
+                          and{" "}
+                          <Link href="/privacy" className="underline">
+                            Privacy Policy
+                          </Link>
+                          .
+                        </span>
+                      </label>
+                      {fieldErrors.consent && (
+                        <p className="text-xs text-red-600">
+                          {fieldErrors.consent}
+                        </p>
+                      )}
+                      <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={
+                          modalState !== "editing" ||
+                          backgroundUploading ||
+                          !text.trim() ||
+                          !agreedToLegal
                         }
-                      }}
-                      className="mt-0.5"
-                    />
-                    <span>
-                      I agree to the{" "}
-                      <Link href="/terms" className="underline">
-                        Terms and Conditions
-                      </Link>{" "}
-                      and{" "}
-                      <Link href="/privacy" className="underline">
-                        Privacy Policy
-                      </Link>
-                      .
-                    </span>
-                  </label>
-                  {fieldErrors.consent && (
-                    <p className="text-xs text-red-600">
-                      {fieldErrors.consent}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    onClick={handleSubmit}
-                    disabled={
-                      isSubmitting ||
-                      backgroundUploading ||
-                      !text.trim() ||
-                      !agreedToLegal
-                    }
-                    className="w-full py-4 bg-foreground text-background font-medium text-sm rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
-                      <path
-                        d="M1.42188 10.5273C0.519531 9.43359 0 8.03906 0 6.5625C0 2.95312 3.14453 0 7 0C10.8555 0 14 2.95312 14 6.5625C14 10.1992 10.8555 13.125 7 13.125C6.01562 13.125 5.05859 12.9336 4.18359 12.5781L1.01172 13.9453C0.902344 14 0.820312 14 0.710938 14C0.300781 14 0 13.6992 0 13.3164C0 13.1797 0.0273438 13.0703 0.0820312 12.9609L1.42188 10.5273ZM2.43359 9.70703C2.76172 10.1172 2.81641 10.6914 2.57031 11.1562L2.07812 12.0586L3.69141 11.375C3.99219 11.2383 4.375 11.2383 4.70312 11.375C5.38672 11.6484 6.17969 11.8125 7 11.8125C10.2266 11.8125 12.6875 9.37891 12.6875 6.5625C12.6875 3.74609 10.2266 1.3125 7 1.3125C3.77344 1.3125 1.3125 3.74609 1.3125 6.5625C1.3125 7.73828 1.72266 8.80469 2.43359 9.70703Z"
-                        fill="currentColor"
-                      />
-                    </svg>
-                    {isSubmitting ? "Submitting..." : "Submit a Quotes"}
-                  </button>
+                        className="w-full py-4 bg-foreground text-background font-medium text-sm rounded-full hover:bg-foreground/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center gap-2"
+                      >
+                        <svg width="16" height="16" viewBox="0 0 14 14" fill="none">
+                          <path
+                            d="M1.42188 10.5273C0.519531 9.43359 0 8.03906 0 6.5625C0 2.95312 3.14453 0 7 0C10.8555 0 14 2.95312 14 6.5625C14 10.1992 10.8555 13.125 7 13.125C6.01562 13.125 5.05859 12.9336 4.18359 12.5781L1.01172 13.9453C0.902344 14 0.820312 14 0.710938 14C0.300781 14 0 13.6992 0 13.3164C0 13.1797 0.0273438 13.0703 0.0820312 12.9609L1.42188 10.5273ZM2.43359 9.70703C2.76172 10.1172 2.81641 10.6914 2.57031 11.1562L2.07812 12.0586L3.69141 11.375C3.99219 11.2383 4.375 11.2383 4.70312 11.375C5.38672 11.6484 6.17969 11.8125 7 11.8125C10.2266 11.8125 12.6875 9.37891 12.6875 6.5625C12.6875 3.74609 10.2266 1.3125 7 1.3125C3.77344 1.3125 1.3125 3.74609 1.3125 6.5625C1.3125 7.73828 1.72266 8.80469 2.43359 9.70703Z"
+                            fill="currentColor"
+                          />
+                        </svg>
+                        Submit a Quote
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+              </>
+            )}
           </div>
         )}
       </div>

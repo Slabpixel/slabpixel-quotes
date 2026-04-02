@@ -12,6 +12,11 @@ export interface QuoteData {
   colorPalette: string | null;
   mood: string | null;
   cardImageUrl: string | null;
+  /**
+   * Quote status (e.g. PENDING / IN_REVIEW / PUBLISHED).
+   * Optional because the public feed only fetches published quotes.
+   */
+  status?: string;
   publishedAt: string | null;
   submitter?: {
     id: string;

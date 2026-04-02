@@ -11,11 +11,15 @@ import { cn } from "@/lib/cn";
 import SiteHeader from "@/components/SiteHeader";
 import { BackToHome } from "@/components/BackToHome";
 import QuoteOverlay from "@/components/QuoteOverlay";
+import StatusBadge from "@/components/StatusBadge";
 
 interface ProfileClientProps {
   profile: PublicProfile;
   quotes: QuoteData[];
+  draftQuotes: QuoteData[];
   isOwnProfile: boolean;
+  canViewDraftQuotes: boolean;
+  canDeleteDraftQuotes: boolean;
 }
 
 function ProfileAvatar({
@@ -57,7 +61,10 @@ function ProfileAvatar({
 export default function ProfileClient({
   profile,
   quotes: initialQuotes,
+  draftQuotes: initialDraftQuotes,
   isOwnProfile,
+  canViewDraftQuotes,
+  canDeleteDraftQuotes,
 }: ProfileClientProps) {
   const router = useRouter();
   const [name, setName] = useState(profile.name);
@@ -67,6 +74,9 @@ export default function ProfileClient({
   const [savingBio, setSavingBio] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [shareCopied, setShareCopied] = useState(false);
+  const [drafts, setDrafts] = useState(initialDraftQuotes);
+  const [deletingDraftId, setDeletingDraftId] = useState<string | null>(null);
+  const [draftDeleteError, setDraftDeleteError] = useState<string | null>(null);
   const [selected, setSelected] = useState<{
     quote: QuoteData;
     rect: { top: number; left: number; width: number; height: number };
@@ -137,6 +147,32 @@ export default function ProfileClient({
   };
 
   const avatarSrc = profilePhoto;
+
+  const removeDraftQuote = async (quoteId: string) => {
+    if (!canDeleteDraftQuotes) return;
+    if (!confirm("Remove this draft quote?")) return;
+
+    setDraftDeleteError(null);
+    setDeletingDraftId(quoteId);
+    try {
+      const res = await fetch(`/api/me/quotes/${quoteId}`, {
+        method: "DELETE",
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(
+          typeof data?.error === "string" ? data.error : "Failed to delete draft",
+        );
+      }
+
+      setDrafts((prev) => prev.filter((q) => q.id !== quoteId));
+    } catch (err) {
+      setDraftDeleteError(err instanceof Error ? err.message : "Failed to delete");
+    } finally {
+      setDeletingDraftId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -246,6 +282,61 @@ export default function ProfileClient({
           </button>
         </div>
 
+        {/* Draft preview (private to owner/admin) */}
+        {canViewDraftQuotes && (
+          <div className="border-t border-border pt-8 mb-10">
+            <h2 className="text-sm font-medium text-foreground/50 uppercase tracking-wider mb-6">
+              Draft Preview
+            </h2>
+
+            {drafts.length === 0 ? (
+              <p className="text-foreground/40 text-sm py-6 text-center">
+                No drafts yet.
+              </p>
+            ) : (
+              <>
+                {draftDeleteError && (
+                  <div className="text-red-600 text-sm py-2 mb-4 text-center">
+                    {draftDeleteError}
+                  </div>
+                )}
+                <div className="grid grid-cols-3 gap-2 sm:gap-3">
+                  {drafts.map((quote) => (
+                    <ProfileQuoteCard
+                      key={quote.id}
+                      quote={quote}
+                      status={quote.status ?? null}
+                      onRemove={
+                        canDeleteDraftQuotes
+                          ? () => removeDraftQuote(quote.id)
+                          : undefined
+                      }
+                      removing={deletingDraftId === quote.id}
+                      onSelect={(rect, cardRect) =>
+                        setSelected({
+                          quote,
+                          rect: {
+                            top: rect.top,
+                            left: rect.left,
+                            width: rect.width,
+                            height: rect.height,
+                          },
+                          cardRect: {
+                            top: cardRect.top,
+                            left: cardRect.left,
+                            width: cardRect.width,
+                            height: cardRect.height,
+                          },
+                        })
+                      }
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Quotes grid — Instagram style */}
         <div className="border-t border-border pt-8">
           <h2 className="text-sm font-medium text-foreground/50 uppercase tracking-wider mb-6">
@@ -263,6 +354,7 @@ export default function ProfileClient({
                 <ProfileQuoteCard
                   key={quote.id}
                   quote={quote}
+                  status={undefined}
                   onSelect={(rect, cardRect) =>
                     setSelected({
                       quote,
@@ -301,10 +393,16 @@ export default function ProfileClient({
 
 function ProfileQuoteCard({
   quote,
+  status,
   onSelect,
+  onRemove,
+  removing,
 }: {
   quote: QuoteData;
+  status?: string | null;
   onSelect: (rect: DOMRect, cardRect: DOMRect) => void;
+  onRemove?: (() => void) | undefined;
+  removing?: boolean;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const cardRef = useRef<HTMLDivElement>(null);
@@ -348,6 +446,27 @@ function ProfileQuoteCard({
           : null),
       }}
     >
+      {status && (
+        <div className="absolute top-2 left-2 z-10">
+          <StatusBadge status={status} className="px-2 py-0.5 text-[0.62rem]" />
+        </div>
+      )}
+
+      {onRemove && (
+        <button
+          type="button"
+          aria-label="Remove draft quote"
+          disabled={removing}
+          onClick={(e) => {
+            e.stopPropagation();
+            onRemove();
+          }}
+          className="absolute top-2 right-2 z-10 inline-flex items-center justify-center rounded-full bg-white/90 text-foreground/80 border border-border w-8 h-8 text-[0.65rem] hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {removing ? "…" : "×"}
+        </button>
+      )}
+
       {(bgResolved.type === "preset" || bgResolved.type === "custom") && (
         <div className="absolute inset-0 bg-black/25" />
       )}
