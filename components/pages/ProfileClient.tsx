@@ -297,7 +297,7 @@ export default function ProfileClient({
             <button
               type="button"
               onClick={() => setActiveTab("published")}
-              className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
+              className={`px-4 py-2 text-xs font-medium tracking-normal rounded-full border transition-all cursor-pointer ${
                 activeTab === "published"
                   ? "border-foreground bg-foreground text-background"
                   : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
@@ -309,7 +309,7 @@ export default function ProfileClient({
               <button
                 type="button"
                 onClick={() => setActiveTab("draft")}
-                className={`px-4 py-2 text-xs uppercase tracking-widest rounded-full border transition-all cursor-pointer ${
+                className={`px-4 py-2 text-xs font-medium tracking-normal rounded-full border transition-all cursor-pointer ${
                   activeTab === "draft"
                     ? "border-foreground bg-foreground text-background"
                     : "border-foreground/15 text-foreground/50 hover:text-foreground hover:border-foreground/30"
