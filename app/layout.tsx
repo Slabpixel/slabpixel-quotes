@@ -30,7 +30,12 @@ export default function RootLayout({
   return (
     <ViewTransitions>
       <html lang="en">
-        <body className={`${switzer.variable} font-sans antialiased`}>
+        {/* Some browser extensions (e.g. grammar checkers) may mutate <body>
+            attributes before React hydrates, causing harmless hydration warnings. */}
+        <body
+          suppressHydrationWarning
+          className={`${switzer.variable} font-sans antialiased`}
+        >
           <LenisProvider>
             <AuthModalProvider>
               <Suspense fallback={null}>
