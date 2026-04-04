@@ -201,7 +201,7 @@ function FeedItem({
 
       {/* ── 2 ───────────────────────── */}
       <div className="relative h-full flex items-center justify-end max-lg:hidden">
-        <div className="flex items-start w-full justify-end text-sm mr-5 leading-none select-none">
+        <div className="flex items-start w-full justify-end text-2xl mr-5 leading-none select-none">
           <span className={cn(isActive ? "text-foreground" : "text-foreground/20")}>
             {date.day}
           </span>
@@ -569,11 +569,11 @@ export default function HomeClient({ quotes }: HomeClientProps) {
           />
 
           {/* Desktop-only infinite month/year rails */}
-          <div className="max-lg:hidden pointer-events-none fixed left-10 top-1/2 -translate-y-1/2 z-2 grid grid-cols-[32px_72px] items-center gap-14">
+          <div className="max-lg:hidden pointer-events-none fixed left-10 top-1/2 -translate-y-1/2 z-2 grid grid-cols-[72px_120px] items-center gap-8">
             <div className="h-[76vh] max-h-[760px] overflow-hidden flex items-center">
               <div
                 ref={yearRailRef}
-                className="flex flex-col items-start text-sm leading-none select-none gap-20 will-change-transform"
+                className="flex flex-col items-start text-2xl leading-none select-none gap-20 will-change-transform"
               >
                 {railYears.map((item) => (
                   <span
@@ -592,7 +592,7 @@ export default function HomeClient({ quotes }: HomeClientProps) {
             <div className="h-[76vh] max-h-[760px] overflow-hidden flex items-center">
               <div
                 ref={monthRailRef}
-                className="flex flex-col items-start text-sm leading-none select-none gap-32 will-change-transform"
+                className="flex flex-col items-start text-2xl leading-none select-none gap-32 will-change-transform"
               >
                 {railMonths.map((item) => (
                   <span
